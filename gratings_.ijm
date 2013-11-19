@@ -1,7 +1,11 @@
 /*
  * Draw vertical stripes for diffraction gratings.
- * stripes of about equal with for black and white 
+ * stripes of about equal width in black and white
+ * User defined number of sections with power of 2
+ * increasing pitch, distance between white stripes,
+ * starting with pitch of 2 pixels.  
  */
+
 w = 1920;
 h = 1080;
 
