@@ -1,0 +1,15 @@
+LG TV screen is 700 mm wide 1920 x 1080, RBG out from laptop
+1920 / 2 = 960 lines max resolution.
+
+disposable camera 35mm colour film. 
+Closest focus without flash is 1m
+TV pretty much fills field of view at 1 m. 
+
+35mm wide colour photo film.
+35000/960 = 35 micrometer pitch lines - if camera lens can resolve it. 
+
+use imagej macro to draw the image in 4 sectors, left to right, of max resolution, then lower resolutions, 70, 140, 280 ish micron pitch lines. 2x, 4, 8x , 16x larger. Could be too large a range.... so make tighter range also with 1,2,3,4,5x
+
+pics on camera film:
+1-8 2x each of normal TV brighness, then max, then medium, then low brightness. 
+
