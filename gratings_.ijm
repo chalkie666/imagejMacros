@@ -25,7 +25,8 @@ startx = 0;
 newImage("Gratings", "8-bit Black", w, h, 1);
 
 for (section = 0; section < noOfSections; section++) {
-	pitch = 1<<(section+1); 
+	// pitch = 1<<(section+1); 
+	pitch = (section+1)*2;
 	for (j = 0; j < h; j++) {
 		endx = sectionWidth * (section+1);
 		startx = endx - sectionWidth;
