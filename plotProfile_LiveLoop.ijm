@@ -7,10 +7,10 @@ run("Capture Screen");
 
 //Set the ROI for use by Plot Profile
 //makeRectangle(124, 386, 290, 259);
-x = 124;
+x = 250;
 y = 386;
-dx = 290;
-dy = 259;
+dx = 100;
+dy = 100;
 makeRectangle(x, y, dx, dy);
 
 //Grab the ROI from the screenshot and make a new image with it. 
@@ -31,7 +31,7 @@ run("Close");
 waitForUser;
 
 // Set number of times to run the loop, it can be a very large number. 
-timePoints = 100;
+timePoints = 1000;
 
 // Loop to repeat the above first plot, 
 // reusing the clipboard image and pasting into it
@@ -51,7 +51,7 @@ for (i=0; i<timePoints; i++){
 	run("Close");
 
 	//add a time delay here to update less often
-	//wait(100);
+	wait(1);
 }
 
 // tidy up
