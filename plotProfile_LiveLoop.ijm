@@ -7,11 +7,11 @@ run("Capture Screen");
 
 //Set the ROI for use by Plot Profile
 //makeRectangle(124, 386, 290, 259);
-x1 = 124;
-x2 = 386;
-y1 = 290;
-y2 = 259;
-makeRectangle(x1, x2, y1, y2);
+x = 124;
+y = 386;
+dx = 290;
+dy = 259;
+makeRectangle(x, y, dx, dy);
 
 //Grab the ROI from the screenshot and make a new image with it. 
 run("Copy");
@@ -43,7 +43,7 @@ for (i=0; i<timePoints; i++){
   	run("Capture Screen");
   	run("Set... ", "zoom=1");
   	// same ROI as above here please. 
-	makeRectangle(124, 386, 290, 259);
+	makeRectangle(x, y, dx, dy);
 	run("Copy");
 	selectWindow("Clipboard");
 	run("Paste");
