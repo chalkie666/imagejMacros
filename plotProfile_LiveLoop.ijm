@@ -9,7 +9,7 @@ run("Capture Screen");
 makeRectangle(124, 386, 290, 259);
 //makeRectangle(region);
 
-//Grab the ROI from the screen shot and make a new imiage with it. 
+//Grab the ROI from the screenshot and make a new image with it. 
 run("Copy");
 run("Internal Clipboard");
 
@@ -28,9 +28,10 @@ waitForUser;
 timePoints = 100;
 
 // Loop to repeat the above first plot, 
-// resuimng the clipboard image and pasting into it
-// and closing the screenshots as we go
-// plot profile is in live mode, so it updates automatically when the input image changes. 
+// reusing the clipboard image and pasting into it
+// and closing the screenshots as we go.
+// Plot Profile is in live mode,
+// so it updates automatically when the input image changes. 
 
 for (i=0; i<timePoints; i++){
   	run("Capture Screen");
