@@ -6,8 +6,12 @@
 run("Capture Screen");
 
 //Set the ROI for use by Plot Profile
-makeRectangle(124, 386, 290, 259);
-//makeRectangle(region);
+//makeRectangle(124, 386, 290, 259);
+x1 = 124;
+x2 = 386;
+y1 = 290;
+y2 = 259;
+makeRectangle(x1, x2, y1, y2);
 
 //Grab the ROI from the screenshot and make a new image with it. 
 run("Copy");
@@ -21,7 +25,9 @@ run("Plot Profile");
 selectWindow("Screenshot");
 run("Close");
 
-// user needs to click "Live" button in plot profile window and move it to a good place. 
+// user needs to click "Live" button in plot profile window
+// and move Clipboard and Plot Profile windows to a good place,
+// out of the way of the ROI 
 waitForUser;
 
 // Set number of times to run the loop, it can be a very large number. 
@@ -39,7 +45,7 @@ for (i=0; i<timePoints; i++){
   	// same ROI as above here please. 
 	makeRectangle(124, 386, 290, 259);
 	run("Copy");
-	selectWindow("Clipboard-1");
+	selectWindow("Clipboard");
 	run("Paste");
 	selectWindow("Screenshot");
 	run("Close");
@@ -49,5 +55,5 @@ for (i=0; i<timePoints; i++){
 }
 
 // tidy up
-selectWindow("Clipboard-1");
+selectWindow("Clipboard");
 run("Close");
