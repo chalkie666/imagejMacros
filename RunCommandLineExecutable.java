@@ -57,7 +57,7 @@ public class RunCommandLineExecutable implements Command {
 	public void run() {
 		arg1 = arg1Path.getPath();
 		exeString = executablePath + " " + arg1;
-		standardOut = "standard output goes here"
+		standardOut = "standard output goes here";
 
 		try {
 			// Run ls command
