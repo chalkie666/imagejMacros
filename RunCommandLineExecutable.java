@@ -2,7 +2,8 @@
  * GPL v3 
  */
 import java.io.File;
-import java.lang.Runtime;
+import java.io.IOException;
+import java.lang.ProcessBuilder;
 
 import net.imagej.ImageJ;
 
@@ -57,15 +58,22 @@ public class RunCommandLineExecutable implements Command {
 	public void run() {
 		arg1 = arg1Path.getPath();
 		exeString = executablePath + " " + arg1;
-		standardOut = "standard output goes here";
 
-		try {
-			// Run ls command
-			Process process = Runtime.getRuntime().exec(exeString);
-		} catch (Exception e) {
-		e.printStackTrace(System.err);
-		}
-
+		ProcessBuilder pb = new ProcessBuilder(executablePath, arg1); //, "myArg2");
+ 		//Map<String, String> env = pb.environment();
+ 		//env.put("VAR1", "myValue");
+ 		//env.remove("OTHERVAR");
+ 		//env.put("VAR2", env.get("VAR1") + "suffix");
+ 		pb.redirectErrorStream(true);
+ 		//pb.directory(new File("/tmp"));
+		File log = new File(arg1 + ".log");
+ 		
+ 		try {
+ 			Process p = pb.start();
+ 			//p.getInputStream().appendTo(log);
+ 		} catch (IOException e) {
+    		System.err.println("Caught IOException: " + e.getMessage());
+ 		}
 	}
 
 	/**
