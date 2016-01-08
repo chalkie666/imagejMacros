@@ -1,6 +1,41 @@
 /*
- * exponential freq. chirp wave image
+ * exponential freq. chirp wave image, for convolution demos.
+ *
+ * What's it useful for:
+ * Showing effect of Gaussian blurring (convolution) on contrast vs. spatial frequency.
+ * Showing a simulation of the systematic error effect
+ * of the objecive lens OTF (similar to a Gaussian blur) on the
+ * contrast of different spatial frequencies in a light microscopy image.
+ * Showing why optical microscope images should be deconvolved,
+ * to correct the systematic error of contrast vs. feature size:
+ * Contrast of smaller and smaller features is attenuatted more and more.
+ * Measurements of small object intensities are lower then they should be
+ * compared to larger objects, making quantitative analysis problematic.
+ *
+ * Why this approach?
+ * Biologists are not familiar with frequency space and Fourier Theorem
+ * The general trivial description of blur caused by the lens describes
+ * the resoluition limit to some intuitive extent, but does not highlight
+ * the main problem that deconvolution fixes: That the contrast of resolved
+ * features is attenuated as a function of feature size - the OTF.
+ * Meaning, quantification of intensity in different sized objects is likely
+ * to be far from close to the true values until the image is deconvolved,
+ * thus restoring the contrast and intensity of the smaller features.
+ * The trick here is to show frequency space in real space: Not having to
+ * explain frequency space so we don't lose most of the audience.
+ *
+ * How to do it:
+ * 1) Run the macro to generate the increasingly stripey image.
+ * 2) Select all, then run plot profile (Ctrl-A, Ctrl-K)
+ * 3) In plot profile, select live mode.
+ * 4) Run the Gaussian Blur tool, set Sigma (Radius) to 5, turn on Preview.
+ * 5) Toggle preview on and off to see the effect.
+ * 6) Try different Sigma values to simulate different lens numerical apertures. Higher Sigma corresponds to lower N.A., and more blur.
+ * 7) See the effect of noise on resolution by adding noise to the image. Use a line selection, not select all, for the plot profile.
+ * 8) Note the bandwidth (resolution limit) imposed by the blur.
+ * 9) Note that high spatial frequencies close to the resolution limit have their contrast more strongly attenuated than lower spatial frequency features.
  */
+
 w = 1024;
 h = 64;
 
@@ -17,6 +52,8 @@ for (j = 0; j < h; j++)
 		
 		pixValue = sin(2*PI*fzero*(pow(k,t)*t));
 		
+		// scale to pix value range 0-256
 		scaledPixVal = (pixValue+1) * 127;
- 		setPixel(i, j, scaledPixVal);
+		setPixel(i, j, scaledPixVal);
 	}
+
