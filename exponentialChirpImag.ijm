@@ -39,7 +39,7 @@
 w = 1024;
 h = 64;
 
-newImage("Chirp", "8-bit black", w, h, 1);
+newImage("Chirp", "32-bit black", w, h, 1);
 for (j = 0; j < h; j++)
 	for (i = 0; i < w; i++) {
 		t = (i/256);
@@ -57,3 +57,27 @@ for (j = 0; j < h; j++)
 		setPixel(i, j, scaledPixVal);
 	}
 
+// reset display and show the plot profile - wave has same cntrast regardless of spacing of stripes. 
+resetMinAndMax();
+run("Select All");
+run("Plot Profile");
+
+selectWindow("Chirp");
+run("Duplicate...", "title=Chirp-blur");
+run("Gaussian Blur...", "sigma=5");
+run("Select All");
+run("Plot Profile");
+open("/home/dan/Documents/github/imagejMacros/5sigma33x33GaussKernel.tif");
+selectWindow("Chirp-blur");
+run("Iterative Deconvolve 3D", "image=Chirp-blur point=5sigma33x33GaussKernel.tif output=Deconvolved show log wiener=0.000 low=0 z_direction=1 maximum=1000 terminate=0.000");
+setMinAndMax(0, 255);
+run("Select All");
+run("Plot Profile");
+Plot.setLogScaleX(false);
+Plot.setLogScaleY(false);
+Plot.setLimits(0,1023,0,255);
+
+//http://dev.theomader.com/gaussian-kernel-calculator/
+
+//Gaussian sharpen:
+// http://www.aforgenet.com/framework/docs/html/4600a4d7-825b-138f-5c31-249a10335b26.htm
