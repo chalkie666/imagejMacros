@@ -62,14 +62,22 @@ resetMinAndMax();
 run("Select All");
 run("Plot Profile");
 
+waitForUser("Next?");
+
 selectWindow("Chirp");
 run("Duplicate...", "title=Chirp-blur");
 run("Gaussian Blur...", "sigma=5");
 run("Select All");
 run("Plot Profile");
-open("/home/dan/Documents/github/imagejMacros/5sigma33x33GaussKernel.tif");
+
+waitForUser("Next?");
+
+selectWindow("5sigma33x33GaussKernel.tif");
+
+waitForUser("Next?");
+
 selectWindow("Chirp-blur");
-run("Iterative Deconvolve 3D", "image=Chirp-blur point=5sigma33x33GaussKernel.tif output=Deconvolved show log wiener=0.000 low=0 z_direction=1 maximum=1000 terminate=0.000");
+run("Iterative Deconvolve 3D", "image=Chirp-blur point=5sigma33x33GaussKernel.tif output=Deconvolved show log wiener=0.000 low=0 z_direction=1 maximum=300 terminate=0.000");
 setMinAndMax(0, 255);
 run("Select All");
 run("Plot Profile");
