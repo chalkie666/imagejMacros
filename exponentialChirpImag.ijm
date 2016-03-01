@@ -19,7 +19,7 @@
  *
  * Measurements of small object intensities are lower then they should be
  * compared to larger objects, making quantitative analysis problematic.
- * Deconvolution greatly impreves the situation, to the resolution or noise limit. 
+ * Deconvolution greatly impreves the situation, to the resolution or noise limit.
  *
  * Why this approach?
  * Biologists are not familiar with frequency space and Fourier Theorem
@@ -71,7 +71,7 @@ for (j = 0; j < h; j++)
 		setPixel(i, j, scaledPixVal);
 	}
 
-// reset display and show the plot profile - wave has same contrast regardless of spacing of stripes. 
+// reset display and show the plot profile - wave has same contrast regardless of spacing of stripes.
 resetMinAndMax();
 run("Select All");
 run("Plot Profile");
