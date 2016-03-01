@@ -1,16 +1,25 @@
 /*
- * exponential freq. chirp wave image, for convolution demos.
+ * exponential freq. chirp wave image, for convolution / deconvolution demos.
+ *
+ * Requires:
+ * Iterative Deconvolution 3D plugin from Bob Dougherty
+ * 5sigma33x33GaussKernel.tif image as deconvolution PSF matching 5 sigma gaussian blur
  *
  * What's it useful for:
- * Showing effect of Gaussian blurring (convolution) on contrast vs. spatial frequency.
+ * Showing effect of Gaussian blurring (convolution) on contrast vs. spatial frequency,
+ * then partially fixing the intruduced error by deconvolution.
+ *
  * Showing a simulation of the systematic error effect
  * of the objecive lens OTF (similar to a Gaussian blur) on the
  * contrast of different spatial frequencies in a light microscopy image.
  * Showing why optical microscope images should be deconvolved,
  * to correct the systematic error of contrast vs. feature size:
- * Contrast of smaller and smaller features is attenuatted more and more.
+ * Contrast of smaller and smaller features is attenuatted more and more,
+ * up to the bad limit or noise floor, where deconvolution can no longer recover info.
+ *
  * Measurements of small object intensities are lower then they should be
  * compared to larger objects, making quantitative analysis problematic.
+ * Deconvolution greatly impreves the situation, to the resolution or noise limit. 
  *
  * Why this approach?
  * Biologists are not familiar with frequency space and Fourier Theorem
@@ -25,6 +34,10 @@
  * explain frequency space so we don't lose most of the audience.
  *
  * How to do it:
+ * open in script editor, select language imafeJ macro and run
+ * you might resize and position some windows.
+ *
+ * How to do it the old way
  * 1) Run the macro to generate the increasingly stripey image.
  * 2) Select all, then run plot profile (Ctrl-A, Ctrl-K)
  * 3) In plot profile, select live mode.
@@ -42,7 +55,8 @@ h = 64;
 newImage("Chirp", "32-bit black", w, h, 1);
 for (j = 0; j < h; j++)
 	for (i = 0; i < w; i++) {
-		t = (i/256);
+		t = (i/255.6); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
+
 		// linear chrip
 		// pixValue = sin((2*PI)*(0.1+t)*t);
 		
@@ -57,12 +71,12 @@ for (j = 0; j < h; j++)
 		setPixel(i, j, scaledPixVal);
 	}
 
-// reset display and show the plot profile - wave has same cntrast regardless of spacing of stripes. 
+// reset display and show the plot profile - wave has same contrast regardless of spacing of stripes. 
 resetMinAndMax();
 run("Select All");
 run("Plot Profile");
 
-waitForUser("Next?");
+waitForUser("Continue?");
 
 selectWindow("Chirp");
 run("Duplicate...", "title=Chirp-blur");
@@ -70,14 +84,20 @@ run("Gaussian Blur...", "sigma=5");
 run("Select All");
 run("Plot Profile");
 
-waitForUser("Next?");
+selectWindow("Chirp-blur");
+run("Duplicate...", "title=Chirp-blur-noise");
+run("Add Specified Noise...", "standard=2.0");
+run("Select All");
+run("Plot Profile");
+
+waitForUser("Continue?");
 
 selectWindow("5sigma33x33GaussKernel.tif");
 
-waitForUser("Next?");
+waitForUser("Continue?");
 
-selectWindow("Chirp-blur");
-run("Iterative Deconvolve 3D", "image=Chirp-blur point=5sigma33x33GaussKernel.tif output=Deconvolved show log wiener=0.000 low=0 z_direction=1 maximum=300 terminate=0.000");
+selectWindow("Chirp-blur-noise");
+run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=5sigma33x33GaussKernel.tif output=Deconvolved show log wiener=0.33 low=0 z_direction=1 maximum=100 terminate=0.005");
 setMinAndMax(0, 255);
 run("Select All");
 run("Plot Profile");
