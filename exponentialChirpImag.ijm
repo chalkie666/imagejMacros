@@ -19,6 +19,7 @@
  *
  * Measurements of small object intensities are lower then they should be
  * compared to larger objects, making quantitative analysis problematic.
+ *
  * Deconvolution greatly impreves the situation, to the resolution or noise limit.
  *
  * Why this approach?
