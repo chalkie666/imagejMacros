@@ -11,6 +11,8 @@
  * Showing effect of Gaussian blurring (convolution) on contrast vs. spatial frequency,
  * then fixing the introduced error, within bandwidth of system, by deconvolution.
  *
+ * see also http://imagej.nih.gov/ij/macros/DeconvolutionDemo.txt
+ *
  * Showing a simulation of the systematic error effect
  * of the objecive lens OTF (similar to a Gaussian blur) on the
  * contrast of different spatial frequencies in a light microscopy image.
@@ -54,7 +56,7 @@
 
 // with and height of test "Chirp" image
 w = 1024;
-h = 64;
+h = 1024;
 
 newImage("Chirp", "32-bit black", w, h, 1);
 for (j = 0; j < h; j++)
@@ -80,7 +82,7 @@ resetMinAndMax();
 makeLine(0, 32, 1023, 32);
 run("Plot Profile");
 
-waitForUser("Continue?");
+waitForUser("Generate blurred, and noisy blurred images, Continue?");
 
 selectWindow("Chirp");
 run("Duplicate...", "title=Chirp-blur");
@@ -94,16 +96,26 @@ run("Add Specified Noise...", "standard=2.0");
 makeLine(0, 32, 1023, 32);
 run("Plot Profile");
 
-waitForUser("Continue?");
+waitForUser("Generate PSF matching the blur, for deconvolution, Continue?");
 
 // generate 5 sigma 2D Gaussian PSF for use in deconvolution
-run("Gaussian PSF 3D", "width=33 height=33 number=1 dc-level=255 horizontal=5 vertical=5 depth=0.01");
+run("Gaussian PSF 3D", "width=1024 height=1024 number=1 dc-level=255 horizontal=5 vertical=5 depth=0.01");
 selectWindow("PSF");
 
-waitForUser("Continue?");
+waitForUser("Inverse Filter next, Continue?");
+
+// Fourier domain math deconvolve: inverse filter with PSF.
+// needs square power of 2 images!!! so 1024x1024 here i guess.
+// Fix Me - doesnt work because convolution and deconv PSF are not exactly the same!!
+// convolution used Gaussian blur built-in function,
+// but FD math deconv uses kernel from Gaussian PSF 3D plugin
+// Could use FD math to do the convolution as well, instead of built-in Gaussian blur function.
+run("FD Math...", "image1=Chirp-blur operation=Deconvolve image2=PSF result=InverseFilteredNoNoise do");
+
+waitForUser("Iterative Deconvolution using generted PSF next, Continue?");
 
 selectWindow("Chirp-blur-noise");
-run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSF output=Deconvolved normalize show log wiener=0.33 low=0 z_direction=1 maximum=100 terminate=0.005");
+run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSF output=Deconvolved normalize show log wiener=0.33 low=0 z_direction=1 maximum=35 terminate=0.005");
 setMinAndMax(0, 255);
 makeLine(0, 32, 1023, 32);
 run("Plot Profile");
