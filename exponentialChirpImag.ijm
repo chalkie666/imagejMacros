@@ -55,13 +55,13 @@
  */
 
 // with and height of test "Chirp" image
-w = 1024;
-h = 1024;
+w = 512;
+h = 512;
 
 newImage("Chirp", "32-bit black", w, h, 1);
 for (j = 0; j < h; j++)
 	for (i = 0; i < w; i++) {
-		t = (i/255.6); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
+		t = (i/149.8); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
 
 		// linear chrip
 		// pixValue = sin((2*PI)*(0.1+t)*t);
@@ -79,49 +79,63 @@ for (j = 0; j < h; j++)
 
 // reset display and show the plot profile - wave has same contrast regardless of spacing of stripes.
 resetMinAndMax();
-makeLine(0, 32, 1023, 32);
+makeLine(0, 32, 511, 32);
 run("Plot Profile");
 
-waitForUser("Generate blurred, and noisy blurred images, Continue?");
-
-selectWindow("Chirp");
-run("Duplicate...", "title=Chirp-blur");
-run("Gaussian Blur...", "sigma=5");
-makeLine(0, 32, 1023, 32);
-run("Plot Profile");
-
-selectWindow("Chirp-blur");
-run("Duplicate...", "title=Chirp-blur-noise");
-run("Add Specified Noise...", "standard=2.0");
-makeLine(0, 32, 1023, 32);
-run("Plot Profile");
-
-waitForUser("Generate PSF matching the blur, for deconvolution, Continue?");
+waitForUser("Generate PSF for convolution and deconvolution, Continue?");
 
 // generate 5 sigma 2D Gaussian PSF for use in deconvolution
-run("Gaussian PSF 3D", "width=1024 height=1024 number=1 dc-level=255 horizontal=5 vertical=5 depth=0.01");
+run("Gaussian PSF 3D", "width=512 height=512 number=1 dc-level=255 horizontal=5 vertical=5 depth=0.01");
+// add a little white noise to avoid divide by zero in inverse filter.
 selectWindow("PSF");
+run("Duplicate...", "title=PSFwithNoise");
+selectWindow("PSFwithNoise");
+run("Add Specified Noise...", "standard=0.2");
+
+waitForUser("Generate blurred image, Continue?");
+
+selectWindow("Chirp");
+//run("Duplicate...", "title=Chirp-blur");
+//run("Gaussian Blur...", "sigma=5");
+// Use Fourier domain math to do the convolution
+run("FD Math...", "image1=Chirp operation=Convolve image2=PSFwithNoise result=Chirp-blur32bit do");
+//rescale to 8 bit range
+selectWindow("Chirp-blur32bit");
+run("Duplicate...", "title=Chirp-blur8bit");
+resetMinAndMax();
+run("8-bit");
+makeLine(0, 32, 511, 32);
+run("Plot Profile");
 
 waitForUser("Inverse Filter next, Continue?");
 
-// Fourier domain math deconvolve: inverse filter with PSF.
+// Fourier domain math deconvolve: inverse filter with PSFwithNoise.
 // needs square power of 2 images!!! so 1024x1024 here i guess.
-// Fix Me - doesnt work because convolution and deconv PSF are not exactly the same!!
-// convolution used Gaussian blur built-in function,
-// but FD math deconv uses kernel from Gaussian PSF 3D plugin
-// Could use FD math to do the convolution as well, instead of built-in Gaussian blur function.
-run("FD Math...", "image1=Chirp-blur operation=Deconvolve image2=PSF result=InverseFilteredNoNoise do");
+// we used FD math to do the convolution as well, instead of built-in Gaussian blur function.
+run("FD Math...", "image1=Chirp-blur32bit operation=Deconvolve image2=PSFwithNoise result=InverseFiltered do");
+selectWindow("InverseFiltered");
+makeLine(0, 32, 511, 32);
+run("Plot Profile");
 
-waitForUser("Iterative Deconvolution using generted PSF next, Continue?");
+waitForUser("Generate blurred, more noisy image, Continue?");
+
+selectWindow("Chirp-blur8bit");
+run("Duplicate...", "title=Chirp-blur-noise");
+selectWindow("Chirp-blur-noise");
+run("Add Specified Noise...", "standard=2.0");
+makeLine(0, 32, 511, 32);
+run("Plot Profile");
+
+waitForUser("Iterative Deconvolution using generated PSF next, Continue?");
 
 selectWindow("Chirp-blur-noise");
-run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSF output=Deconvolved normalize show log wiener=0.33 low=0 z_direction=1 maximum=35 terminate=0.005");
+run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise output=Deconvolved normalize show log wiener=0.33 low=0 z_direction=1 maximum=35 terminate=0.005");
 setMinAndMax(0, 255);
-makeLine(0, 32, 1023, 32);
+makeLine(0, 32, 511, 32);
 run("Plot Profile");
 Plot.setLogScaleX(false);
 Plot.setLogScaleY(false);
-Plot.setLimits(0,1023,0,255);
+Plot.setLimits(0,511,0,255);
 
 //http://dev.theomader.com/gaussian-kernel-calculator/
 
