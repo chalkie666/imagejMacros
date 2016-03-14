@@ -5,7 +5,10 @@
  * Iterative Deconvolution 3D plugin from Bob Dougherty
  * http://www.optinav.com/Iterative-Deconvolve-3D.htm
  * Gaussian PSF 3D from Bob Dougherty
+ * and
  * http://www.optinav.com/download/Gaussian_PSF_3D.java
+ * or Diffraction PSD 3D also from Bob Dougherty
+ * http://www.optinav.com/download/Diffraction_PSF_3D.java
  *
  * What's it useful for:
  * Showing effect of Gaussian blurring (convolution) on contrast vs. spatial frequency,
@@ -85,12 +88,20 @@ run("Plot Profile");
 waitForUser("Generate PSF for convolution and deconvolution, Continue?");
 
 // generate 5 sigma 2D Gaussian PSF for use in deconvolution
-run("Gaussian PSF 3D", "width=512 height=512 number=1 dc-level=255 horizontal=5 vertical=5 depth=0.01");
+//run("Gaussian PSF 3D", "width=512 height=512 number=1 dc-level=255 horizontal=5 vertical=5 depth=0.01");
+// OR
+// generate squared (confocal) 2D Diffraction model PSF for use in deconvolution
+run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=510 longitudinal=0 image=10 slice=200 width,=512 height,=512 depth,=1 normalization=[Sum of pixel values = 1] title=PSF");
+selectWindow("PSF");
+run("Square");
+run("Multiply...", "value=1000000000000");
+resetMinAndMax();
+
 // add a little white noise to avoid divide by zero in inverse filter.
 selectWindow("PSF");
 run("Duplicate...", "title=PSFwithNoise");
 selectWindow("PSFwithNoise");
-run("Add Specified Noise...", "standard=0.2");
+run("Add Specified Noise...", "standard=0.00000002"); //0.2 for Gaussian PSF
 
 waitForUser("Generate blurred image, Continue?");
 
@@ -129,7 +140,7 @@ run("Plot Profile");
 waitForUser("Iterative Deconvolution using generated PSF next, Continue?");
 
 selectWindow("Chirp-blur-noise");
-run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise output=Deconvolved normalize show log wiener=0.33 low=0 z_direction=1 maximum=35 terminate=0.005");
+run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise output=Deconvolved normalize show log perform wiener=0.33 low=0 z_direction=1 maximum=35 terminate=0.005");
 setMinAndMax(0, 255);
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
