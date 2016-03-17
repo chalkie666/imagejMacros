@@ -75,8 +75,10 @@ for (j = 0; j < h; j++)
 		
 		pixValue = sin(2*PI*fzero*(pow(k,t)*t));
 		
-		// scale to pix value range 0-256
-		scaledPixVal = (pixValue+1) * 127;
+		// scale  pix value to photons, 255 for confocal, 1000 in widefiled
+		
+		//scaledPixVal = ((pixValue+1) * 127) + 1.0;
+		scaledPixVal = ((pixValue+1) * 5000) + 1.0;
 		setPixel(i, j, scaledPixVal);
 	}
 
@@ -106,15 +108,24 @@ run("Add Specified Noise...", "standard=0.00000002"); //0.2 for Gaussian PSF
 waitForUser("Generate blurred image, Continue?");
 
 selectWindow("Chirp");
+
+// Gaussian convolution
 //run("Duplicate...", "title=Chirp-blur");
 //run("Gaussian Blur...", "sigma=5");
+
 // Use Fourier domain math to do the convolution
 run("FD Math...", "image1=Chirp operation=Convolve image2=PSFwithNoise result=Chirp-blur32bit do");
-//rescale to 8 bit range
+//rescale to 8 bit
+//1-10000 or required original range
 selectWindow("Chirp-blur32bit");
-run("Duplicate...", "title=Chirp-blur8bit");
+run("Duplicate...", "title=Chirp-blur-scaled");
+selectWindow("Chirp-blur-scaled");
+//run("8-bit"); //if 255 range
+getStatistics(area, mean, min, max);
+run("Divide...", "value=" + max);
+run("Multiply...", "value=10000");
 resetMinAndMax();
-run("8-bit");
+
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
 
@@ -130,23 +141,30 @@ run("Plot Profile");
 
 waitForUser("Generate blurred, more noisy image, Continue?");
 
-selectWindow("Chirp-blur8bit");
-run("Duplicate...", "title=Chirp-blur-noise");
-selectWindow("Chirp-blur-noise");
-run("Add Specified Noise...", "standard=2.0");
+selectWindow("Chirp-blur-scaled");
+
+//For Gaussian noise
+//run("Duplicate...", "title=Chirp-blur-noise");
+//selectWindow("Chirp-blur-noise");
+//run("Add Specified Noise...", "standard=2.0"); //Gaussian, aka white noise
+
+//For Poisson noise
+run("RandomJ Poisson", "mean=10.0 insertion=Modulatory"); //Poisson modulatory noise - mean parameter is ignored
+rename("Chirp-blur-noise");
+
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
 
 waitForUser("Iterative Deconvolution using generated PSF next, Continue?");
 
 selectWindow("Chirp-blur-noise");
-run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise output=Deconvolved normalize show log perform wiener=0.33 low=0 z_direction=1 maximum=35 terminate=0.005");
-setMinAndMax(0, 255);
+run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise output=Deconvolved normalize show log perform wiener=0.33 low=0 z_direction=1 maximum=35 terminate=0.005");
+resetMinAndMax();
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
-Plot.setLogScaleX(false);
-Plot.setLogScaleY(false);
-Plot.setLimits(0,511,0,255);
+//Plot.setLogScaleX(false);
+//Plot.setLogScaleY(false);
+//Plot.setLimits(0,511,0,10000);
 
 //http://dev.theomader.com/gaussian-kernel-calculator/
 
