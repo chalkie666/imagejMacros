@@ -87,7 +87,9 @@ resetMinAndMax();
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
 
-waitForUser("Notice - wave has same contrast regardless of spacing of stripes! \n Next - Generate PSF for convolution and deconvolution, Continue?");
+waitForUser("Notice - The pattern has the same contrast, 1-10000 photons,\n"
++ "regardless of spacing of stripes!\n"
++ "   Next - Generate PSF for convolution and deconvolution, Continue?");
 
 // generate 5 sigma 2D Gaussian PSF for use in deconvolution
 //run("Gaussian PSF 3D", "width=512 height=512 number=1 dc-level=255 horizontal=5 vertical=5 depth=0.01");
@@ -105,7 +107,9 @@ run("Duplicate...", "title=PSFwithNoise");
 selectWindow("PSFwithNoise");
 run("Add Specified Noise...", "standard=0.00000002"); //0.2 for Gaussian PSF
 
-waitForUser("PSF here is a diffraction model, about 20 pixels wide.\n Next - Blur image using PSF, Continue?");
+waitForUser("The PSF is generated from a diffraction model. \n"
++ "It is about 20 pixels wide.\n"
++ "   Next - Blur image using PSF, Continue?");
 
 selectWindow("Chirp");
 
@@ -129,7 +133,10 @@ resetMinAndMax();
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
 
-waitForUser("Notice - The smaller the features are, the more their contrast is attenuated \n - the more wrong the pixel values are. \n Next - Inverse Filter, Continue?");
+waitForUser("Notice - The smaller the features are,\n"
++ "the more their contrast is attenuated: \n"
++ "The smaller features have the most wrong pixel values! \n"
++ "   Next - Inverse Filter to undo the blur, Continue?");
 
 // Fourier domain math deconvolve: inverse filter with PSFwithNoise.
 // needs square power of 2 images!!! so 1024x1024 here i guess.
@@ -139,7 +146,10 @@ selectWindow("InverseFiltered");
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
 
-waitForUser("Notice - The inverse filter gives a perfect result \n because PSF is known prefectly and there is no noise! \n Next - Generate blurred, more noisy image, Continue?");
+waitForUser("Notice: The inverse filter gives a perfect result \n"
++ "because the PSF is known perfectly and there is no noise! \n"
++ "Sadly this is not a realistic situation... \n"
++ "   Next - Generate blurred, more noisy image, Continue?");
 
 selectWindow("Chirp-blur-scaled");
 
@@ -155,7 +165,12 @@ rename("Chirp-blur-noise");
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
 
-waitForUser("This is more realistic, because the image is blurred and has Noise \n - so a simple inverse filter will not work, noise will explode! \n Next - Constrained Iterative Deconvolution using generated PSF on noisy blurred image, Continue?");
+waitForUser("This is more realistic: \n"
++ "The image is blurred and contains Noise \n"
++ "Thus a simple inverse filter will not work, /n"
++ "bacause amplified noise will kill the real features! \n"
++ "   Next - Constrained Iterative Deconvolution \n"
++ "   using the generated PSF on noisy blurred image, Continue?");
 
 selectWindow("Chirp-blur-noise");
 run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise output=Deconvolved normalize show log perform wiener=0.33 low=0 z_direction=1 maximum=35 terminate=0.005");
@@ -166,7 +181,12 @@ run("Plot Profile");
 //Plot.setLogScaleY(false);
 //Plot.setLimits(0,511,0,10000);
 
-waitForUser("The image is partially restored, up to the resolution and noise limit. \n The pixel intensity values of the smaller and smaller features \n are restored to closer to their real values, \n so the image is more quantitative than the original blurred noisy image. \n Notice the noise is also supressed. \n Finished.")
+waitForUser("The image contrast is restored as far as the resolution and noise limit. \n"
++ "The pixel intensity values of the smaller and smaller features \n"
++ "are restored to close to their real values, up to the resolution limit: \n"
++ "The result image is more quantitative than the original blurred noisy image. \n"
++ "Notice the noise is also suppressed.\n"
++ "   Finished.")
 
 
 //http://dev.theomader.com/gaussian-kernel-calculator/
