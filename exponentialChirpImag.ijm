@@ -172,8 +172,8 @@ run("Plot Profile");
 
 waitForUser("This is more realistic: \n"
 + "The image is blurred and contains Noise \n"
-+ "Thus a simple inverse filter will not work, /n"
-+ "bacause amplified noise will kill the real features! \n"
++ "Thus a simple inverse filter will not work, \n"
++ "because amplified noise will kill the real features! \n"
 + "   Next - Constrained Iterative Deconvolution \n"
 + "   using the generated PSF on noisy blurred image, Continue?");
 
