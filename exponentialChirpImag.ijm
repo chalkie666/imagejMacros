@@ -95,7 +95,9 @@ waitForUser("Notice - The pattern has the same contrast, 1-10000 photons,\n"
 //run("Gaussian PSF 3D", "width=512 height=512 number=1 dc-level=255 horizontal=5 vertical=5 depth=0.01");
 // OR
 // generate squared (confocal) 2D Diffraction model PSF for use in deconvolution
-run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=510 longitudinal=0 image=10 slice=200 width,=512 height,=512 depth,=1 normalization=[Sum of pixel values = 1] title=PSF");
+run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=510 "
++ "longitudinal=0 image=10 slice=200 width,=512 height,=512 depth,=1 "
++ "normalization=[Sum of pixel values = 1] title=PSF");
 selectWindow("PSF");
 run("Square");
 run("Multiply...", "value=1000000000000");
@@ -118,7 +120,8 @@ selectWindow("Chirp");
 //run("Gaussian Blur...", "sigma=5");
 
 // Use Fourier domain math to do the convolution
-run("FD Math...", "image1=Chirp operation=Convolve image2=PSFwithNoise result=Chirp-blur32bit do");
+run("FD Math...", "image1=Chirp operation=Convolve "
++ "image2=PSFwithNoise result=Chirp-blur32bit do");
 //rescale to 8 bit
 //1-10000 or required original range
 selectWindow("Chirp-blur32bit");
@@ -140,8 +143,10 @@ waitForUser("Notice - The smaller the features are,\n"
 
 // Fourier domain math deconvolve: inverse filter with PSFwithNoise.
 // needs square power of 2 images!!! so 1024x1024 here i guess.
-// we used FD math to do the convolution as well, instead of built-in Gaussian blur function.
-run("FD Math...", "image1=Chirp-blur32bit operation=Deconvolve image2=PSFwithNoise result=InverseFiltered do");
+// we used FD math to do the convolution as well, 
+// instead of built-in Gaussian blur function.
+run("FD Math...", "image1=Chirp-blur32bit operation=Deconvolve "
++ "image2=PSFwithNoise result=InverseFiltered do");
 selectWindow("InverseFiltered");
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
@@ -159,7 +164,7 @@ selectWindow("Chirp-blur-scaled");
 //run("Add Specified Noise...", "standard=2.0"); //Gaussian, aka white noise
 
 //Poisson modulatory noise - mean parameter is ignored
-run("RandomJ Poisson", "mean=10.0 insertion=Modulatory"); //Poisson modulatory noise - mean parameter is ignored
+run("RandomJ Poisson", "mean=10.0 insertion=Modulatory");
 rename("Chirp-blur-noise");
 
 makeLine(0, 32, 511, 32);
@@ -173,7 +178,9 @@ waitForUser("This is more realistic: \n"
 + "   using the generated PSF on noisy blurred image, Continue?");
 
 selectWindow("Chirp-blur-noise");
-run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise output=Deconvolved normalize show log perform wiener=0.33 low=0 z_direction=1 maximum=35 terminate=0.005");
+run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise "
++ "output=Deconvolved normalize show log perform wiener=0.33 "
++ "low=0 z_direction=1 maximum=200 terminate=0.001");
 resetMinAndMax();
 makeLine(0, 32, 511, 32);
 run("Plot Profile");
