@@ -43,9 +43,9 @@
  *
  * How to do it:
  * open in script editor, select language imageJ macro and run
- * you might resize and position some windows.
+ * you might resize and reposition some windows.
  *
- * How to do it the old, but still useful way:
+ * How to do interactive blur widths with live line profile plot:
  * 1) Run the macro to generate the increasingly stripey image.
  * 2) Select all, then run plot profile (Ctrl-A, Ctrl-K)
  * 3) In plot profile, select live mode.
@@ -158,7 +158,7 @@ selectWindow("Chirp-blur-scaled");
 //selectWindow("Chirp-blur-noise");
 //run("Add Specified Noise...", "standard=2.0"); //Gaussian, aka white noise
 
-//For Poisson noise
+//Poisson modulatory noise - mean parameter is ignored
 run("RandomJ Poisson", "mean=10.0 insertion=Modulatory"); //Poisson modulatory noise - mean parameter is ignored
 rename("Chirp-blur-noise");
 
