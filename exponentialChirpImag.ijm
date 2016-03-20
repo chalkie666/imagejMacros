@@ -1,16 +1,34 @@
 /*
  * exponential freq. chirp wave image, with automated convolution / deconvolution demos.
  *
+ * Thanks:
+ * 	
+ * 	For code/tools - the authors of the plugins used here
+ * 	and all the contributors to imageJ and Fiji. 
+ * 	
+ *  For ideas, late Jan 2016 - Richard Cole,
+ *  Director: Advanced Light Microscopy & Image Analysis Core 
+ *  Wadsworth Center Dept. of Biomedical Sciences 
+ *  School of Public Health State University of New York
+ *
+ * 
  * Requires:
+ * 
  * Iterative Deconvolution 3D plugin from Bob Dougherty
  * http://www.optinav.com/Iterative-Deconvolve-3D.htm
+ * 
  * Gaussian PSF 3D from Bob Dougherty
- * and
  * http://www.optinav.com/download/Gaussian_PSF_3D.java
  * or Diffraction PSD 3D also from Bob Dougherty
  * http://www.optinav.com/download/Diffraction_PSF_3D.java
  *
+ * RandomJ for Poisson noise generation
+ * Turn on Erik's  http://imagej.net/ImageScience imageJ update site
+ * if you dont have it already. 
+ *
+ *
  * What's it useful for:
+ * 
  * Showing effect of Gaussian blurring (convolution) on contrast vs. spatial frequency,
  * then fixing the introduced error, within bandwidth of system, by deconvolution.
  *
@@ -57,7 +75,7 @@
  * 9) Note that high spatial frequencies close to the resolution limit have their contrast more strongly attenuated than lower spatial frequency features.
  */
 
-// with and height of test "Chirp" image
+// with and height of test spatial frequency  "Chirp" image
 w = 512;
 h = 512;
 
