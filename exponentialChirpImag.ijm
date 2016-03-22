@@ -25,7 +25,7 @@
  * 
  * Gaussian PSF 3D from Bob Dougherty
  * http://www.optinav.com/download/Gaussian_PSF_3D.class
- * or Diffraction PSD 3D also from Bob Dougherty
+ * or Diffraction PSF 3D also from Bob Dougherty
  * http://www.optinav.com/download/Diffraction_PSF_3D.class
  *
  * RandomJ for Poisson noise generation
