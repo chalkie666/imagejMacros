@@ -14,13 +14,19 @@
  * 
  * Requires:
  * 
+ * some plugins, see below: 
+ * Put the .class files in the ImageJ plugins folder
+ * As of jan 2016, compiling the .java source code files 
+ * on the fly is broken for java 1.8 (but works for java 1.6)
+ * 
  * Iterative Deconvolution 3D plugin from Bob Dougherty
  * http://www.optinav.com/Iterative-Deconvolve-3D.htm
+ * http://www.optinav.com/download/Iterative_Deconvolve_3D.class
  * 
  * Gaussian PSF 3D from Bob Dougherty
- * http://www.optinav.com/download/Gaussian_PSF_3D.java
+ * http://www.optinav.com/download/Gaussian_PSF_3D.class
  * or Diffraction PSD 3D also from Bob Dougherty
- * http://www.optinav.com/download/Diffraction_PSF_3D.java
+ * http://www.optinav.com/download/Diffraction_PSF_3D.class
  *
  * RandomJ for Poisson noise generation
  * Turn on Erik's  http://imagej.net/ImageScience imageJ update site
