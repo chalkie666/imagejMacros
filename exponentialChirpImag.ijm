@@ -85,27 +85,43 @@
  * 		have their contrast more strongly attenuated than lower spatial frequency (large) features.
  */
 
-// with and height of test spatial frequency "Chirp" image
+// for x-z truth image for spherical aberration error demo
+h = 128
+w = 128
+newImage("ZBars", "32-bit grayscale-mode", w, h, 1);
+// Make horizontal stripes image. 
+for (j = 0; j < h; j++)
+	for (i = 0; i < w; i++) {	
+		if (j%40 < 8) {
+			pixValue = 10000.0;
+		} else {pixValue = 0.0;
+		}
+		setPixel(i, j, pixValue);
+	}
+resetMinAndMax();
+
+// width and height of test spatial frequency "Chirp" image
 w = 512;
 h = 512;
 
 // we need 32 bit floating point precision for the following maths.
-newImage("Chirp", "32-bit black", w, h, 1);
+newImage("Chirp", "32-bit grayscale-mode", w, h, 1);
+
 for (j = 0; j < h; j++)
 	for (i = 0; i < w; i++) {
 		t = (i/149.8); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
 
 		// linear chirp
 		// pixValue = sin((2*PI)*(0.1+t)*t);
-		
+
 		// exponential chirp
 		fzero = 0.1;
 		k = 3;
-		
+
 		pixValue = sin(2*PI*fzero*(pow(k,t)*t));
-		
+
 		// scale  pix value range to number of photons, eg. 255 for confocal, 10000 in widefield
-		
+
 		//scaledPixVal = ((pixValue+1) * 127) + 1.0;
 		scaledPixVal = ((pixValue+1) * 5000) + 1.0;
 		setPixel(i, j, scaledPixVal);
