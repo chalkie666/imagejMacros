@@ -85,6 +85,7 @@
  * 		have their contrast more strongly attenuated than lower spatial frequency (large) features.
  */
 
+//Spherical Aberration kills deconv demo 
 // for x-z truth image for spherical aberration error demo
 h = 128
 w = 128
@@ -99,6 +100,32 @@ for (j = 0; j < h; j++)
 		setPixel(i, j, pixValue);
 	}
 resetMinAndMax();
+
+// generate 2D (xz, axial) Diffraction model PSF for use in deconvolution
+run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=500 "
++ "longitudinal=0 image=100 slice=128 width,=128 height,=1 depth,=128 "
++ "normalization=[Sum of pixel values = 1] title=PSFxz");
+selectWindow("PSFxz");
+//run("Multiply...", "value=1000000000000");
+resetMinAndMax();
+makeLine(1, 0, 128, 0);
+run("Dynamic Reslice", " ");
+selectWindow("Dynamic Reslice of PSFxz")
+// add a little white noise to avoid divide by zero in inverse filter.
+run("Duplicate...", "title=PSFxzwithNoise");
+selectWindow("PSFxzwithNoise");
+run("Add Specified Noise...", "standard=0.00000002");
+
+//wait now i am copy pasting too much.... convert to functions!
+
+// Cancel or continue
+Dialog.create("Continue?");
+  	Dialog.show();
+
+
+
+
+
 
 // width and height of test spatial frequency "Chirp" image
 w = 512;
