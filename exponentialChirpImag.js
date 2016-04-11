@@ -2,14 +2,14 @@
 importClass(Packages.ij.IJ);
 
 // width and height of test spatial frequency "Chirp" image
-var w = 512;
-var h = 512;
+var width = 512;
+var height = 512;
 // make a javascript array to hold computed pixel values
 var pixels = [];
 
 // compute the pixel values and put them in the pixels array
-for (j = 0; j < h; j++)
-	for (i = 0; i < w; i++) {
+for (j = 0; j < height; j++)
+	for (i = 0; i < width; i++) {
 		var t = (i/149.8); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
 
 		// linear chirp
@@ -23,17 +23,21 @@ for (j = 0; j < h; j++)
 
 		var scaledPixVal = ((pixValue+1.0) * 5000.0) + 1.0;
 		// put the computed pixel value in the correct place in the array
-		pixels[j*w + i] = scaledPixVal;
+		pixels[j*width + i] = scaledPixVal;
 	}
 
-// we need 32 bit floating point precision for the following maths.
-IJ.newImage("Chirp", "32-bit grayscale-mode", w, h, 1);
+// make an image to work in - we need 32 bit floating point precision for the following maths.
+IJ.newImage("Chirp", "32-bit grayscale-mode", width, height, 1);
 IJ.selectWindow("Chirp");
+// get the ImagePlus from the selected image window
 var imp = IJ.getImage();
+// get the ImageProcessor from the ImagePlus, in this case its a FloatProcessor
 var ip = imp.getProcessor();
 // convert JS array to native java array
-//var JavaArray = Java.to(data,"int[]"); works in nashorn js interpreter
+// var JavaArray = Java.to(data,"int[]"); works in nashorn js interpreter
 var javaPixels = Java.to(pixels,"float[]");
+// replace the pixels in the image with the calculated pattern
 ip.setPixels(javaPixels);
+// make sure the display is updated and drawn so we see the pattern.
 imp.updateAndDraw(); 
 IJ.resetMinAndMax();
