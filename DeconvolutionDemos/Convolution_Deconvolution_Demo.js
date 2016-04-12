@@ -169,6 +169,21 @@ messageContinue("Notice", "This is more realistic: \n"
 + "because amplified noise will kill the real features! \n"
 + "   Next - Inverse filtering a noisy image, Continue?");
 
+// Fourier domain math deconvolve of noisy image: 
+// inverse filter with PSF without noise - should amplify noise over features.
+IJ.run("FD Math...", "image1=Chirp-blur-noise operation=Deconvolve "
++ "image2=PSF result=InverseFilteredNoise do");
+IJ.selectWindow("InverseFilteredNoise");
+horizLinePlot();
+
+messageContinue("The inverse filtered image:", "Inverse filtering is defeated by noise \n"
++ "The pixel intensity values of the smaller and smaller features \n"
++ "have a lower and lower signal : noise ratio \n"
++ "The result image has this noise amplified, \n"
++ "so much that the imagefeatures are lost. \n"
++ "   Next - Constrained Iterative Deconvolution \n"
++ "   using the generated PSF on noisy blurred image, Continue?");
+
 // Perform iterative, non negative constrained, deconvolution
 // on the noisy image with the slightly noisy PSF
 // to simulate a real sitiuation. 
