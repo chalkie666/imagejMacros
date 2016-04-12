@@ -94,12 +94,12 @@ importClass(Packages.ij.gui.WaitForUserDialog);
 // end imports
 
 
-// Main code execution block, running functions defined below and IJ functions.
+// Main code execution block
+// running functions defined below and IJ functions.
 
 // generate exponential chirp image by running the function expoChirpImage
 expoChirpImage();
-IJ.makeLine(0, 32, 511, 32);
-IJ.run("Plot Profile");
+horizLinePlot();
 messageContinue("Notice", "The pattern has the same contrast, 1-10000 photons,\n"
 	+ "regardless of spacing of stripes!\n"
 	+ "   Next - Generate PSF for convolution and deconvolution, Continue?");
@@ -116,41 +116,75 @@ IJ.run("Square");
 // make the pixel values large, so we can add a realtively small amount of noise later
 IJ.run("Multiply...", "value=1000000000000");
 IJ.resetMinAndMax();
-
 // add a little white noise to avoid divide by zero in inverse filter.
 IJ.selectWindow("PSF");
 IJ.run("Duplicate...", "title=PSFwithNoise");
 IJ.selectWindow("PSFwithNoise");
-IJ.run("Add Specified Noise...", "standard=0.00000002"); //0.2 for Gaussian PSF
+IJ.run("Add Specified Noise...", "standard=0.00000002");
 
 messageContinue("Notice", "The PSF is generated from a diffraction model. \n"
-+ "It is about 20 pixels wide.\n"
-+ "   Next - Blur image using PSF, Continue?");
-
++ "It is about 20 pixels wide, and simulates a confocal PSF.\n"
++ "   Next - Blur image using the PSF, Continue?");
 
 // Use Fourier domain math to do the convolution
 IJ.selectWindow("Chirp");
 IJ.run("FD Math...", "image1=Chirp operation=Convolve "
 + "image2=PSFwithNoise result=Chirp-blur32bit do");
-//rescale to 8 bit
-//1-10000 or required original range
-IJ.selectWindow("Chirp-blur32bit");
-IJ.run("Duplicate...", "title=Chirp-blur-scaled");
-IJ.selectWindow("Chirp-blur-scaled");
-IJ.getStatistics(area, mean, min, max);
-IJ.run("Divide...", "value=" + max);
-IJ.run("Multiply...", "value=10000");
+scaleIntensities10k("Chirp-blur32bit");
 IJ.resetMinAndMax();
-
-IJ.makeLine(0, 32, 511, 32);
-IJ.run("Plot Profile");
+horizLinePlot();
 
 messageContinue("Notice", "The smaller the features are,\n"
 + "the more their contrast is attenuated: \n"
 + "The smaller features have the most wrong pixel values! \n"
 + "   Next - Inverse Filter to undo the blur, Continue?");
 
+// Fourier domain math deconvolve: inverse filter with PSFwithNoise.
+// little noise in PSF avoids divide by zero
+// needs square power of 2 sized images!!! so 1024x1024 or 512x512 here I guess.
+// Above, we used FD math to do the convolution as well, 
+// instead of built-in Gaussian blur function.
+IJ.run("FD Math...", "image1=Chirp-blur32bit operation=Deconvolve "
++ "image2=PSFwithNoise result=InverseFiltered do");
+IJ.selectWindow("InverseFiltered");
+horizLinePlot();
 
+messageContinue("Notice", "The inverse filter gives a perfect result \n"
++ "because the PSF is known perfectly and there is no noise! \n"
++ "Sadly this is not a realistic situation... \n"
++ "   Next - Generate blurred, more noisy image, Continue?");
+
+// Generate more realistic test image that contains noise
+// so we can demo how to deal with that. 
+IJ.selectWindow("Chirp-blur-scaled");
+//Poisson modulatory noise - mean parameter is ignored
+IJ.run("RandomJ Poisson", "mean=10.0 insertion=Modulatory");
+renameImage("Chirp-blur-scaled with modulatory Poisson noise", "Chirp-blur-noise");
+IJ.selectWindow("Chirp-blur-noise");
+horizLinePlot();
+
+messageContinue("Notice", "This is more realistic: \n"
++ "The image is blurred and contains Noise \n"
++ "Thus a simple inverse filter will not work, \n"
++ "because amplified noise will kill the real features! \n"
++ "   Next - Inverse filtering a noisy image, Continue?");
+
+// Perform iterative, non negative constrained, deconvolution
+// on the noisy image with the slightly noisy PSF
+// to simulate a real sitiuation. 
+IJ.selectWindow("Chirp-blur-noise");
+IJ.run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise "
++ "output=Deconvolved normalize show log perform wiener=0.33 "
++ "low=0 z_direction=1 maximum=200 terminate=0.001");
+IJ.resetMinAndMax();
+horizLinePlot();
+
+messageContinue("The restored result image:", "The image contrast is restored as far as the resolution and noise limit. \n"
++ "The pixel intensity values of the smaller and smaller features \n"
++ "are restored to close to their real values, up to the resolution limit: \n"
++ "The result image is more quantitative than the original blurred noisy image. \n"
++ "Notice the noise is also suppressed.\n"
++ "   Finished.")
 
 
 // functions defined in this javascript file follow below
@@ -204,4 +238,31 @@ function expoChirpImage() {
 function messageContinue (title, message) {
 	waitDialog = new WaitForUserDialog(title, message);
 	waitDialog.show();
+}
+
+function horizLinePlot() {
+IJ.makeLine(0, 32, 511, 32);
+IJ.run("Plot Profile");
+}
+
+//rescale intensities to 0-10000
+function scaleIntensities10k(image) {
+	IJ.selectWindow(image);
+	IJ.run("Duplicate...", "title=Chirp-blur-scaled");
+	IJ.selectWindow("Chirp-blur-scaled");
+	// get the ImagePlus from the selected image window
+	var imp = IJ.getImage();
+	// get the image statistics object with the MAXIMUM
+	var max = imp.getStatistics().max;
+	IJ.run("Divide...", "value=" + max);
+	IJ.run("Multiply...", "value=10000");
+}
+
+//rename image - change the title of the ImagePlus.
+function renameImage(oldName, newName) {
+	// get the ImagePlus from the desired image window
+	IJ.selectWindow(oldName);
+	var imp = IJ.getImage();
+	//change it's title to the new name
+	imp.setTitle(newName);
 }
