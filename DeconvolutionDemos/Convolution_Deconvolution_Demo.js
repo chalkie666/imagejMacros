@@ -1,5 +1,12 @@
-/*
- * exponential freq. chirp wave image, with automated convolution / deconvolution demos.
+/* Convolution - Deconvolution Demo for Fiji/ImageJ
+ * 
+ * Exponential freq. chirp wave image, with automated convolution / deconvolution demos.
+ * Shows the point of doing image resortation aka deconvolution
+ * as well as differences between simple inverse filters and constrained iterative methods. 
+ * 
+ * 
+ * Daniel J. White 2016
+ *
  * 
  * License: GPL v3.
  *
@@ -36,9 +43,11 @@
  *
  *
  * What's it useful for:
- * 
- * Showing effect of Gaussian blurring (convolution) on contrast vs. spatial frequency,
- * then fixing the introduced error, within bandwidth of system, by deconvolution.
+ * Showing why image restoration by deconvolution is necessary
+ * before quantitative analysis of high N.A. fluorescence microscopy images. 
+ * Showing/Simulating the effect of lens induced blurring (convolution)
+ * on contrast vs. spatial frequency, then fixing the introduced error,
+ * within the bandwidth of system, by deconvolution.
  *
  * see also http://imagej.nih.gov/ij/macros/DeconvolutionDemo.txt
  *
@@ -51,15 +60,16 @@
  * up to the band limit and/or noise floor, after which deconvolution can no longer
  * recover information since it is lost.
  *
- * Measurements of small object intensities are lower than they should be
- * compared to larger objects, making quantitative analysis problematic.
+ * In raw images, measurements of small object intensities
+ * are lower than they should be compared to larger objects,
+ * making quantitative analysis problematic.
  *
  * Deconvolution greatly improves the situation, to the resolution and/or noise limit.
  *
  * Why this approach?
  * Biologists are often unfamiliar with frequency space and the Fourier Theorem.
  * The general trivial description of blur caused by the lens describes
- * the resoluition limit to some intuitive extent, but does not highlight
+ * the resolution limit to some intuitive extent, but does not highlight
  * the main problem that deconvolution fixes: That the contrast of resolved
  * features is attenuated as a function of feature size - the OTF.
  * Meaning, quantification of intensity in different sized objects is likely
@@ -69,11 +79,11 @@
  * explain frequency space so we don't lose most of the audience.
  *
  * How to do it:
- * open this imageJ macro in the script editor, select language imageJ macro and run.
+ * open this imageJ javascript in the script editor, select language javascript and run.
  * You might resize and reposition some windows.
  *
  * How to do interactive exploration of different blur widths with live line profile plot:
- * 1) Run the macro to generate the increasingly finely striped image.
+ * 1) Run the script to generate the increasingly finely striped image.
  * 2) Select all, then run plot profile (Ctrl-A, Ctrl-K)
  * 3) In plot profile, select live mode.
  * 4) Run the Gaussian Blur tool, set Sigma (Radius) to 5, turn on Preview.
@@ -91,23 +101,23 @@
 // imports first please
 importClass(Packages.ij.IJ);
 importClass(Packages.ij.gui.WaitForUserDialog);
-// end imports
+// end of imports
 
 
 // Main code execution block
-// running functions defined below and IJ functions.
+// running functions defined below and ImageJ functions.
 
-// generate exponential chirp image by running the function expoChirpImage
+// generate exponential chirp stripey image by running the function expoChirpImage
 expoChirpImage();
 horizLinePlot();
 messageContinue("Notice", "The pattern has the same contrast, 1-10000 photons,\n"
-	+ "regardless of spacing of stripes!\n"
-	+ "   Next - Generate PSF for convolution and deconvolution, Continue?");
+	+ "regardless of spacing or width of the stripes!\n"
+	+ "   Next - Generate Point Spread Function \n"
+	+ "   (PSF = image of a point light source) \n"
+	+ "   for convolution and deconvolution, Continue?");
 
-// generate 5 sigma 2D Gaussian PSF for use in deconvolution
-// IJ.run("Gaussian PSF 3D", "width=512 height=512 number=1 dc-level=255 horizontal=5 vertical=5 depth=0.01");
-// OR
-// generate squared value (confocal) 2D Diffraction model PSF for use in deconvolution
+// generate squared value (quasi-confocal) 2D Diffraction model PSF
+// for blurring (de-sharpening) by convolution and deblurring (re-shaprening or restoring) by deconvolution
 IJ.run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=510 "
 + "longitudinal=0 image=10 slice=200 width,=512 height,=512 depth,=1 "
 + "normalization=[Sum of pixel values = 1] title=PSF");
@@ -124,26 +134,28 @@ IJ.run("Add Specified Noise...", "standard=0.00000002");
 
 messageContinue("Notice", "The PSF is generated from a diffraction model. \n"
 + "It is about 20 pixels wide, and simulates a confocal PSF.\n"
-+ "   Next - Blur image using the PSF, Continue?");
++ "   Next - blur the stripey image using the PSF, Continue?");
 
 // Use Fourier domain math to do the convolution
+// needs power of 2 sized images in x and y. 
 IJ.selectWindow("Chirp");
 IJ.run("FD Math...", "image1=Chirp operation=Convolve "
 + "image2=PSFwithNoise result=Chirp-blur32bit do");
+// rescale intensities to same range as original image.
 scaleIntensities10k("Chirp-blur32bit");
 IJ.resetMinAndMax();
 horizLinePlot();
 
 messageContinue("Notice", "The smaller the features are,\n"
-+ "the more their contrast is attenuated: \n"
++ "the more their contrast is attenuated (lost): \n"
 + "The smaller features have the most wrong pixel values! \n"
-+ "   Next - Inverse Filter to undo the blur, Continue?");
++ "   Next - Inverse Filter with the PSF \n"
++ "   to restore the image intensites, Continue?");
 
 // Fourier domain math deconvolve: inverse filter with PSFwithNoise.
-// little noise in PSF avoids divide by zero
+// A little noise in PSF avoids divide by zero
 // needs square power of 2 sized images!!! so 1024x1024 or 512x512 here I guess.
-// Above, we used FD math to do the convolution as well, 
-// instead of built-in Gaussian blur function.
+// Above, we used FD math to do the convolution as well.
 IJ.run("FD Math...", "image1=Chirp-blur32bit operation=Deconvolve "
 + "image2=PSFwithNoise result=InverseFiltered do");
 IJ.selectWindow("InverseFiltered");
@@ -151,13 +163,13 @@ horizLinePlot();
 
 messageContinue("Notice", "The inverse filter gives a perfect result \n"
 + "because the PSF is known perfectly and there is no noise! \n"
-+ "Sadly this is not a realistic situation... \n"
-+ "   Next - Generate blurred, more noisy image, Continue?");
++ "Sadly this is not a realistic situation, there is always noise... \n"
++ "   Next - Generate blurred, slightly noisy image, Continue?");
 
 // Generate more realistic test image that contains noise
 // so we can demo how to deal with that. 
 IJ.selectWindow("Chirp-blur-scaled");
-//Poisson modulatory noise - mean parameter is ignored
+//Poisson modulatory noise, like photon shot noise. The "mean" parameter is ignored in modulatory mode. 
 IJ.run("RandomJ Poisson", "mean=10.0 insertion=Modulatory");
 renameImage("Chirp-blur-scaled with modulatory Poisson noise", "Chirp-blur-noise");
 IJ.selectWindow("Chirp-blur-noise");
@@ -165,7 +177,7 @@ horizLinePlot();
 
 messageContinue("Notice", "This is more realistic: \n"
 + "The image is blurred and contains Noise \n"
-+ "Thus a simple inverse filter will not work, \n"
++ "Thus, a simple inverse filter will not work, \n"
 + "because amplified noise will kill the real features! \n"
 + "   Next - Inverse filtering a noisy image, Continue?");
 
@@ -176,13 +188,13 @@ IJ.run("FD Math...", "image1=Chirp-blur-noise operation=Deconvolve "
 IJ.selectWindow("InverseFilteredNoise");
 horizLinePlot();
 
-messageContinue("The inverse filtered image:", "Inverse filtering is defeated by noise \n"
+messageContinue("The inverse filtered image:", "Inverse filtering is defeated by noise! \n"
 + "The pixel intensity values of the smaller and smaller features \n"
 + "have a lower and lower signal : noise ratio \n"
-+ "The result image has this noise amplified, \n"
-+ "so much that the imagefeatures are lost. \n"
-+ "   Next - Constrained Iterative Deconvolution \n"
-+ "   using the generated PSF on noisy blurred image, Continue?");
++ "The inverse filtered image has this noise amplified: \n"
++ "so much that the image features are lost. \n"
++ "   Next - Iterative, Non-negativity Constrained Deconvolution \n"
++ "   using the generated PSF on the noisy blurred image, Continue?");
 
 // Perform iterative, non negative constrained, deconvolution
 // on the noisy image with the slightly noisy PSF
@@ -194,11 +206,15 @@ IJ.run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise "
 IJ.resetMinAndMax();
 horizLinePlot();
 
-messageContinue("The restored result image:", "The image contrast is restored as far as the resolution and noise limit. \n"
+messageContinue("The restored result image:", "The image contrast is restored up to the resolution and noise limit. \n"
 + "The pixel intensity values of the smaller and smaller features \n"
 + "are restored to close to their real values, up to the resolution limit: \n"
 + "The result image is more quantitative than the original blurred noisy image. \n"
-+ "Notice the noise is also suppressed.\n"
++ "Notice: The noise is also suppressed.\n"
++ "The result is constrained to be non negative: There is no negative light! \n"
++ "The iterative method makes a guess at the true image, blurs it with the PSF, \n"
++ "compares it with the blurry raw image, then makes new guesses by \n"
++ "repeatedly minimising the difference between the blurred guesses and the raw blurry image. \n"
 + "   Finished.")
 
 
