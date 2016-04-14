@@ -107,8 +107,9 @@ importClass(Packages.ij.gui.WaitForUserDialog);
 // Main code execution block
 // running functions defined below and ImageJ functions.
 
-// generate exponential chirp stripey image by running the function expoChirpImage
-expoChirpImage();
+// generate exponential (or linear) chirp stripey image by running the  drawTestImageFunction with expoChirpFunction as argument
+drawTestImageFromFunction(expoChirpFunction, "Chirp");
+//drawTestImageFromFunction(linearChirpFunction, "Chirp");
 horizLinePlot();
 messageContinue("Notice", "The pattern has the same contrast, 1-10000 photons,\n"
 	+ "regardless of spacing or width of the stripes!\n"
@@ -220,37 +221,25 @@ messageContinue("The restored result image:", "The image contrast is restored up
 
 // functions defined in this javascript file follow below
 
-// function to draw an expoential chirp image - has no arguments, all hardcoded variables. 
-function expoChirpImage() {
+
+// abstracted function to draw a test image using another function given as an argument
+function drawTestImageFromFunction(imageFunction, imageName) {
 
 	// width and height of test spatial frequency "Chirp" image
 	var width = 512;
 	var height = 512;
-	// make a javascript array to hold computed pixel values
 	var pixels = [];
-	
+
 	// compute the pixel values and put them in the pixels array
 	for (j = 0; j < height; j++)
 		for (i = 0; i < width; i++) {
-			var t = (i/149.8); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
-	
-			// linear chirp
-			// pixValue = sin((2*PI)*(0.1+t)*t);
-	
-			// exponential chirp
-			var fzero = 0.1;
-			var k = 3.0;
-			var pixValue = Math.sin(2.0*Math.PI*fzero*(Math.pow(k,t)*t));
-			// scale  pix value range to number of photons, eg. 255 for confocal, 10000 in widefield
-	
-			var scaledPixVal = ((pixValue+1.0) * 5000.0) + 1.0;
-			// put the computed pixel value in the correct place in the array
-			pixels[j*width + i] = scaledPixVal;
+			// get the pixel value from the imageFunction and put it in the correct place in the array
+			pixels[j*width + i] = imageFunction(i, j);
 		}
 	
 	// make an image to work in - we need 32 bit floating point precision for the following maths.
-	IJ.newImage("Chirp", "32-bit grayscale-mode", width, height, 1);
-	IJ.selectWindow("Chirp");
+	IJ.newImage(imageName, "32-bit grayscale-mode", width, height, 1);
+	IJ.selectWindow(imageName);
 	// get the ImagePlus from the selected image window
 	var imp = IJ.getImage();
 	// get the ImageProcessor from the ImagePlus, in this case its a FloatProcessor
@@ -263,6 +252,33 @@ function expoChirpImage() {
 	// make sure the display is updated and drawn so we see the pattern.
 	imp.updateAndDraw(); 
 	IJ.resetMinAndMax();
+}
+
+// calculates an exponential chirp function in x
+function expoChirpFunction(x, y) { 
+	// make a javascript array to hold computed pixel values
+	var t = (x/149.8); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
+	
+			// linear chirp
+			// pixValue = sin((2*PI)*(0.1+t)*t);
+	
+	// exponential chirp
+	var fzero = 0.1;
+	var k = 3.0;
+	var pixValue = Math.sin(2.0*Math.PI*fzero*(Math.pow(k,t)*t));
+	// scale  pix value range to number of photons, eg. 255 for confocal, 10000 in widefield
+	var scaledPixVal = ((pixValue+1.0) * 5000.0) + 1.0;
+	return scaledPixVal;
+}
+
+// calculates a linear chirp function in x
+function linearChirpFunction(x, y) { 
+	// make a javascript array to hold computed pixel values
+	var t = (x/149.8); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
+	// linear chirp
+	pixValue = Math.sin((2*Math.PI)*(0.1+t)*t);
+	var scaledPixVal = ((pixValue+1.0) * 5000.0) + 1.0;
+	return scaledPixVal;
 }
 
 // function to display the info messages before click ok to continue
