@@ -107,8 +107,12 @@ importClass(Packages.ij.gui.WaitForUserDialog);
 // Main code execution block
 // running functions defined below and ImageJ functions.
 
+// Part 2  - spherical aberration effect on deconv demo, in xz
+drawTestImageFromFunction(128, 128, horizontalBarsFunction, "HorizBars");
+
+//Part 1 - convolution and deconvolution in 2D
 // generate exponential (or linear) chirp stripey image by running the  drawTestImageFunction with expoChirpFunction as argument
-drawTestImageFromFunction(expoChirpFunction, "Chirp");
+drawTestImageFromFunction(512, 512, expoChirpFunction, "Chirp");
 //drawTestImageFromFunction(linearChirpFunction, "Chirp");
 horizLinePlot();
 messageContinue("Notice", "The pattern has the same contrast, 1-10000 photons,\n"
@@ -223,11 +227,9 @@ messageContinue("The restored result image:", "The image contrast is restored up
 
 
 // abstracted function to draw a test image using another function given as an argument
-function drawTestImageFromFunction(imageFunction, imageName) {
+function drawTestImageFromFunction(width, height, imageFunction, imageName) {
 
 	// width and height of test spatial frequency "Chirp" image
-	var width = 512;
-	var height = 512;
 	var pixels = [];
 
 	// compute the pixel values and put them in the pixels array
@@ -279,6 +281,16 @@ function linearChirpFunction(x, y) {
 	pixValue = Math.sin((2*Math.PI)*(0.1+t)*t);
 	var scaledPixVal = ((pixValue+1.0) * 5000.0) + 1.0;
 	return scaledPixVal;
+}
+
+// function to make horizontal bars image for spherical aberration demo
+function horizontalBarsFunction(x, y) {
+	if (y%40 < 8) {
+		pixValue = 10000.0;
+	} else {
+		pixValue = 0.0;
+	}
+	return pixValue;
 }
 
 // function to display the info messages before click ok to continue
