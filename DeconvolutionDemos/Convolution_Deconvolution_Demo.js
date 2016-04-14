@@ -220,7 +220,7 @@ messageContinue("The restored result image:", "The image contrast is restored up
 + "The iterative method makes a guess at the true image, blurs it with the PSF, \n"
 + "compares it with the blurry raw image, then makes new guesses by \n"
 + "repeatedly minimising the difference between the blurred guesses and the raw blurry image. \n"
-+ "   Finished.")
++ "   Finished part 1.")
 
 
 // functions defined in this javascript file follow below
@@ -258,13 +258,7 @@ function drawTestImageFromFunction(width, height, imageFunction, imageName) {
 
 // calculates an exponential chirp function in x
 function expoChirpFunction(x, y) { 
-	// make a javascript array to hold computed pixel values
 	var t = (x/149.8); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
-	
-			// linear chirp
-			// pixValue = sin((2*PI)*(0.1+t)*t);
-	
-	// exponential chirp
 	var fzero = 0.1;
 	var k = 3.0;
 	var pixValue = Math.sin(2.0*Math.PI*fzero*(Math.pow(k,t)*t));
@@ -275,9 +269,7 @@ function expoChirpFunction(x, y) {
 
 // calculates a linear chirp function in x
 function linearChirpFunction(x, y) { 
-	// make a javascript array to hold computed pixel values
-	var t = (x/149.8); // this value avoids sharp discontinuity at 1024 wide image edge, less artifacts?
-	// linear chirp
+	var t = (x/149.8);
 	pixValue = Math.sin((2*Math.PI)*(0.1+t)*t);
 	var scaledPixVal = ((pixValue+1.0) * 5000.0) + 1.0;
 	return scaledPixVal;
