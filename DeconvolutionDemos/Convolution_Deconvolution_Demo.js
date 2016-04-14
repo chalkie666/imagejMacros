@@ -108,7 +108,45 @@ importClass(Packages.ij.gui.WaitForUserDialog);
 // running functions defined below and ImageJ functions.
 
 // Part 2  - spherical aberration effect on deconv demo, in xz
-drawTestImageFromFunction(128, 128, horizontalBarsFunction, "HorizBars");
+
+// For this simulation we need a test image to show errors from deconvolving with
+// perfect PSF when image was blurred with spherical aberrated PSF.
+// Horizontal bars should work.
+// We will work in the axial direction where SA is worst, xz plane image. 
+drawTestImageFromFunction(128, 128, horizontalBarsFunction, "horizBars");
+IJ.run("Set... ", "zoom=200 x=128 y=128");
+// generate 2D (xz, axial) Diffraction model PSF for use in deconvolution
+// with zero spherical aberration, SA is a number... but here must be as a string for IJ.run to work
+makeAxialPSF("0", "0wave", "axialPSFnoSA");
+// and another with 1 wave at max aperture spherical aberration.
+makeAxialPSF("500", "1wave", "axialPSF1wave");
+
+// Convolve the bars image with the PSF with 1 wave spherical aberration
+IJ.run("FD Math...", "image1=horizBars operation=Convolve "
++ "image2=axialPSF1wave result=barsBlurSA do");
+// rescale intensities to same range as original image.
+scaleIntensities10k("barsBlurSA");
+IJ.run("Set... ", "zoom=200 x=128 y=128");
+IJ.setMinAndMax(0.0, 10000.0);
+IJ.run("Fire", "");
+
+// Deconvolve (constrained iterative, because inverse filter totally fails)
+// First, using non aberrated, but therfore wrong, PSF
+// Should produce intensity artifacts in the result image bars edges.
+IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSFnoSA "
++ "output=barsBlurSAdecon normalize show log perform wiener=0.33 "
++ "low=0 z_direction=1 maximum=200 terminate=0.001");
+IJ.run("Set... ", "zoom=200 x=128 y=128");
+IJ.setMinAndMax(0.0, 10000.0);
+IJ.run("Fire", "");
+// Lastly, deconv with correct PSF, should look better!
+IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSF1wave "
++ "output=barsBlurSAdeconSA normalize show log perform wiener=0.33 "
++ "low=0 z_direction=1 maximum=200 terminate=0.001");
+IJ.run("Set... ", "zoom=200 x=128 y=128");
+IJ.setMinAndMax(0.0, 10000.0);
+IJ.run("Fire", "");
+
 
 //Part 1 - convolution and deconvolution in 2D
 // generate exponential (or linear) chirp stripey image by running the  drawTestImageFunction with expoChirpFunction as argument
@@ -148,7 +186,6 @@ IJ.run("FD Math...", "image1=Chirp operation=Convolve "
 + "image2=PSFwithNoise result=Chirp-blur32bit do");
 // rescale intensities to same range as original image.
 scaleIntensities10k("Chirp-blur32bit");
-IJ.resetMinAndMax();
 horizLinePlot();
 
 messageContinue("Notice", "The smaller the features are,\n"
@@ -299,14 +336,15 @@ IJ.run("Plot Profile");
 //rescale intensities to 0-10000
 function scaleIntensities10k(image) {
 	IJ.selectWindow(image);
-	IJ.run("Duplicate...", "title=Chirp-blur-scaled");
-	IJ.selectWindow("Chirp-blur-scaled");
+	var duplicateTitle = "title=" + image + "-scaled";
+	IJ.run("Duplicate...", duplicateTitle);
 	// get the ImagePlus from the selected image window
 	var imp = IJ.getImage();
 	// get the image statistics object with the MAXIMUM
 	var max = imp.getStatistics().max;
 	IJ.run("Divide...", "value=" + max);
 	IJ.run("Multiply...", "value=10000");
+	IJ.setMinAndMax(0.0, 10000.0);
 }
 
 //rename image - change the title of the ImagePlus.
@@ -317,3 +355,23 @@ function renameImage(oldName, newName) {
 	//change it's title to the new name
 	imp.setTitle(newName);
 }
+
+function makeAxialPSF(sa, title1, title2) {
+	var cmdString =
+	IJ.run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=500 "
+	+ "longitudinal=" + sa
+	+ " image=100 slice=128 width,=128 height,=1 depth,=128 "
+	+ "normalization=[Sum of pixel values = 1] title="
+	+ title1);
+	IJ.selectWindow(title1);
+	//run("Multiply...", "value=1000000000000");
+	IJ.makeLine(0, 0, 128, 0);
+	IJ.run("Dynamic Reslice", " ");
+	IJ.resetMinAndMax();
+	renameImage("Dynamic Reslice of " + title1, title2);
+	IJ.selectWindow(title2);
+	IJ.setMinAndMax(0.0, 0.005);
+	IJ.run("Set... ", "zoom=200 x=128 y=128");
+	IJ.run("Fire", "");
+}
+
