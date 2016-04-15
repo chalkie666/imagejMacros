@@ -107,46 +107,6 @@ importClass(Packages.ij.gui.WaitForUserDialog);
 // Main code execution block
 // running functions defined below and ImageJ functions.
 
-// Part 2  - spherical aberration effect on deconv demo, in xz
-
-// For this simulation we need a test image to show errors from deconvolving with
-// perfect PSF when image was blurred with spherical aberrated PSF.
-// Horizontal bars should work.
-// We will work in the axial direction where SA is worst, xz plane image. 
-drawTestImageFromFunction(128, 128, horizontalBarsFunction, "horizBars");
-IJ.run("Set... ", "zoom=200 x=128 y=128");
-// generate 2D (xz, axial) Diffraction model PSF for use in deconvolution
-// with zero spherical aberration, SA is a number... but here must be as a string for IJ.run to work
-makeAxialPSF("0", "0wave", "axialPSFnoSA");
-// and another with 1 wave at max aperture spherical aberration.
-makeAxialPSF("500", "1wave", "axialPSF1wave");
-
-// Convolve the bars image with the PSF with 1 wave spherical aberration
-IJ.run("FD Math...", "image1=horizBars operation=Convolve "
-+ "image2=axialPSF1wave result=barsBlurSA do");
-// rescale intensities to same range as original image.
-scaleIntensities10k("barsBlurSA");
-IJ.run("Set... ", "zoom=200 x=128 y=128");
-IJ.setMinAndMax(0.0, 10000.0);
-IJ.run("Fire", "");
-
-// Deconvolve (constrained iterative, because inverse filter totally fails)
-// First, using non aberrated, but therfore wrong, PSF
-// Should produce intensity artifacts in the result image bars edges.
-IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSFnoSA "
-+ "output=barsBlurSAdecon normalize show log perform wiener=0.33 "
-+ "low=0 z_direction=1 maximum=200 terminate=0.001");
-IJ.run("Set... ", "zoom=200 x=128 y=128");
-IJ.setMinAndMax(0.0, 10000.0);
-IJ.run("Fire", "");
-// Lastly, deconv with correct PSF, should look better!
-IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSF1wave "
-+ "output=barsBlurSAdeconSA normalize show log perform wiener=0.33 "
-+ "low=0 z_direction=1 maximum=200 terminate=0.001");
-IJ.run("Set... ", "zoom=200 x=128 y=128");
-IJ.setMinAndMax(0.0, 10000.0);
-IJ.run("Fire", "");
-
 
 //Part 1 - convolution and deconvolution in 2D
 // generate exponential (or linear) chirp stripey image by running the  drawTestImageFunction with expoChirpFunction as argument
@@ -258,6 +218,50 @@ messageContinue("The restored result image:", "The image contrast is restored up
 + "compares it with the blurry raw image, then makes new guesses by \n"
 + "repeatedly minimising the difference between the blurred guesses and the raw blurry image. \n"
 + "   Finished part 1.")
+
+// Stopit and Tidyup!
+IJ.run("Close All", "");
+
+
+// Part 2  - spherical aberration effect on deconv demo, in xz
+
+// For this simulation we need a test image to show errors from deconvolving with
+// perfect PSF when image was blurred with spherical aberrated PSF.
+// Horizontal bars should work.
+// We will work in the axial direction where SA is worst, xz plane image. 
+drawTestImageFromFunction(128, 128, horizontalBarsFunction, "horizBars");
+IJ.run("Set... ", "zoom=200 x=128 y=128");
+// generate 2D (xz, axial) Diffraction model PSF for use in deconvolution
+// with zero spherical aberration, SA is a number... but here must be as a string for IJ.run to work
+makeAxialPSF("0", "0wave", "axialPSFnoSA");
+// and another with 1 wave at max aperture spherical aberration.
+makeAxialPSF("500", "1wave", "axialPSF1wave");
+
+// Convolve the bars image with the PSF with 1 wave spherical aberration
+IJ.run("FD Math...", "image1=horizBars operation=Convolve "
++ "image2=axialPSF1wave result=barsBlurSA do");
+// rescale intensities to same range as original image.
+scaleIntensities10k("barsBlurSA", "barsBlurSA-scaled");
+IJ.run("Set... ", "zoom=200 x=128 y=128");
+IJ.setMinAndMax(0.0, 10000.0);
+IJ.run("Fire", "");
+
+// Deconvolve (constrained iterative, because inverse filter totally fails)
+// First, using non aberrated, but therfore wrong, PSF
+// Should produce intensity artifacts in the result image bars edges.
+IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSFnoSA "
++ "output=barsBlurSAdecon normalize show log perform wiener=0.33 "
++ "low=0 z_direction=1 maximum=200 terminate=0.001");
+IJ.run("Set... ", "zoom=200 x=128 y=128");
+IJ.setMinAndMax(0.0, 10000.0);
+IJ.run("Fire", "");
+// Lastly, deconv with correct PSF, should look better!
+IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSF1wave "
++ "output=barsBlurSAdeconSA normalize show log perform wiener=0.33 "
++ "low=0 z_direction=1 maximum=200 terminate=0.001");
+IJ.run("Set... ", "zoom=200 x=128 y=128");
+IJ.setMinAndMax(0.0, 10000.0);
+IJ.run("Fire", "");
 
 
 // functions defined in this javascript file follow below
