@@ -367,7 +367,7 @@ function messageContinue (title, message) {
 }
 
 function horizLinePlot() {
-IJ.makeLine(0, 32, 511, 32);
+IJ.makeLine(0, 400, 511, 400);
 IJ.run("Plot Profile");
 }
 
