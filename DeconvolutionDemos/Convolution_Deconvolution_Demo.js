@@ -241,9 +241,7 @@ messageContinue("Notice", "The pattern has horizontal bars with sharp edges.\n"
 
 // generate 2D (xz, axial) Diffraction model PSF for use in deconvolution
 // with zero spherical aberration, SA is a number... but here must be as a string for IJ.run to work
-makeAxialPSF("0", "0wave", "axialPSFnoSA");
-// and another with 1 wave at max aperture spherical aberration.
-makeAxialPSF("500", "1wave", "axialPSF1wave");
+makeAxialPSF("0", "0wave", "axialPSF-noSA");
 
 messageContinue("Notice", "The PSF is symmetrical in Z.\n"
 	+ "Horizontal direction is X, and vertical is Z - axial direction!\n"
@@ -253,7 +251,6 @@ messageContinue("Notice", "The PSF is symmetrical in Z.\n"
 // and another PSF with  spherical aberration.
 makeAxialPSF("500", "withSA", "axialPSF-SA");
 
-// Convolve the bars image with the PSF with 1 wave spherical aberration
 messageContinue("Notice", "The PSF is NOT symmetrical in Z!\n"
 	+ "Horizontal direction is X, and vertical is Z - axial direction!\n"
 	+ "   Next - Blur Horizontal Bars image with the PSF having S.A. \n"
@@ -261,7 +258,7 @@ messageContinue("Notice", "The PSF is NOT symmetrical in Z!\n"
 
 // Convolve the bars image with the PSF with spherical aberration
 IJ.run("FD Math...", "image1=horizBars operation=Convolve "
-+ "image2=axialPSF1wave result=barsBlurSA do");
++ "image2=axialPSF-SA result=barsBlurSA do");
 // rescale intensities to same range as original image.
 scaleIntensities10k("barsBlurSA", "barsBlurSA-scaled");
 IJ.run("Set... ", "zoom=200 x=128 y=128");
@@ -276,7 +273,7 @@ messageContinue("Notice", "The Blur is NOT symmetrical in Z!\n"
 // Deconvolve (constrained iterative, because inverse filter totally fails)
 // First, using non aberrated, but therfore wrong, PSF
 // Should produce intensity artifacts in the result image bars edges.
-IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSFnoSA "
+IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSF-noSA "
 + "output=barsBlurSAdecon normalize show log perform wiener=0.33 "
 + "low=0 z_direction=1 maximum=200 terminate=0.001");
 IJ.run("Set... ", "zoom=200 x=128 y=128");
@@ -289,7 +286,7 @@ messageContinue("Notice", "The Blur NOT corrected well at all: Aberration is lef
 	+ "   Continue?");
 
 // Lastly, deconv with correct PSF, should look better!
-IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSF1wave "
+IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSF-SA "
 + "output=barsBlurSAdeconSA normalize show log perform wiener=0.33 "
 + "low=0 z_direction=1 maximum=200 terminate=0.001");
 IJ.run("Set... ", "zoom=200 x=128 y=128");
