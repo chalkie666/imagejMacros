@@ -101,6 +101,7 @@
 // imports first please
 importClass(Packages.ij.IJ);
 importClass(Packages.ij.gui.WaitForUserDialog);
+importClass(Packages.ij.plugin.Duplicator);
 // end of imports
 
 
@@ -145,7 +146,7 @@ IJ.selectWindow("Chirp");
 IJ.run("FD Math...", "image1=Chirp operation=Convolve "
 + "image2=PSFwithNoise result=Chirp-blur32bit do");
 // rescale intensities to same range as original image.
-scaleIntensities10k("Chirp-blur32bit");
+scaleIntensities10k("Chirp-blur32bit", "Chirp-blur-scaled");
 horizLinePlot();
 
 messageContinue("Notice", "The smaller the features are,\n"
@@ -338,14 +339,16 @@ IJ.run("Plot Profile");
 }
 
 //rescale intensities to 0-10000
-function scaleIntensities10k(image) {
+function scaleIntensities10k(image, duplicateTitle) {
+	// get the ImagePlus from the correct image window
 	IJ.selectWindow(image);
-	var duplicateTitle = "title=" + image + "-scaled";
-	IJ.run("Duplicate...", duplicateTitle);
-	// get the ImagePlus from the selected image window
-	var imp = IJ.getImage();
-	// get the image statistics object with the MAXIMUM
-	var max = imp.getStatistics().max;
+	img1 = IJ.getImage();
+	// duplicate and retitle it, and show it
+	img2 = new Duplicator().run(img1);
+	img2.setTitle(duplicateTitle);
+	img2.show();
+	// get the input image statistics object with the MAXIMUM
+	var max = img1.getStatistics().max;
 	IJ.run("Divide...", "value=" + max);
 	IJ.run("Multiply...", "value=10000");
 	IJ.setMinAndMax(0.0, 10000.0);
