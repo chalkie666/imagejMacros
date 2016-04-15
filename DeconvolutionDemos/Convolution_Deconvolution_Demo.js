@@ -232,13 +232,34 @@ IJ.run("Close All", "");
 // We will work in the axial direction where SA is worst, xz plane image. 
 drawTestImageFromFunction(128, 128, horizontalBarsFunction, "horizBars");
 IJ.run("Set... ", "zoom=200 x=128 y=128");
+
+messageContinue("Notice", "The pattern has horizontal bars with sharp edges.\n"
+	+ "Horizontal direction is X, and vertical is Z - axial direction!\n"
+	+ "   Next - Generate XZ PSF \n"
+	+ "   (PSF = image of a point light source) \n"
+	+ "   Continue?");
+
 // generate 2D (xz, axial) Diffraction model PSF for use in deconvolution
 // with zero spherical aberration, SA is a number... but here must be as a string for IJ.run to work
 makeAxialPSF("0", "0wave", "axialPSFnoSA");
 // and another with 1 wave at max aperture spherical aberration.
 makeAxialPSF("500", "1wave", "axialPSF1wave");
 
+messageContinue("Notice", "The PSF is symmetrical in Z.\n"
+	+ "Horizontal direction is X, and vertical is Z - axial direction!\n"
+	+ "   Next - Generate XZ PSF with Spherical Aberration (S.A.). \n"
+	+ "   Continue?");
+
+// and another PSF with  spherical aberration.
+makeAxialPSF("500", "withSA", "axialPSF-SA");
+
 // Convolve the bars image with the PSF with 1 wave spherical aberration
+messageContinue("Notice", "The PSF is NOT symmetrical in Z!\n"
+	+ "Horizontal direction is X, and vertical is Z - axial direction!\n"
+	+ "   Next - Blur Horizontal Bars image with the PSF having S.A. \n"
+	+ "   Continue?");
+
+// Convolve the bars image with the PSF with spherical aberration
 IJ.run("FD Math...", "image1=horizBars operation=Convolve "
 + "image2=axialPSF1wave result=barsBlurSA do");
 // rescale intensities to same range as original image.
@@ -246,6 +267,11 @@ scaleIntensities10k("barsBlurSA", "barsBlurSA-scaled");
 IJ.run("Set... ", "zoom=200 x=128 y=128");
 IJ.setMinAndMax(0.0, 10000.0);
 IJ.run("Fire", "");
+
+messageContinue("Notice", "The Blur is NOT symmetrical in Z!\n"
+	+ "   Next - Deconvolve Blurred Horizontal Bars image with \n"
+	+ "   a non matching, symmetrical PSF, having ZERO S.A. \n"
+	+ "   Continue?");
 
 // Deconvolve (constrained iterative, because inverse filter totally fails)
 // First, using non aberrated, but therfore wrong, PSF
@@ -256,6 +282,12 @@ IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSFnoSA "
 IJ.run("Set... ", "zoom=200 x=128 y=128");
 IJ.setMinAndMax(0.0, 10000.0);
 IJ.run("Fire", "");
+
+messageContinue("Notice", "The Blur NOT corrected well at all: Aberration is left over.\n"
+	+ "   Next - Deconvolve Blurred Horizontal Bars image with \n"
+	+ "   a matching, non symmetrical PSF, with the same S.A. it was blurred with. \n"
+	+ "   Continue?");
+
 // Lastly, deconv with correct PSF, should look better!
 IJ.run("Iterative Deconvolve 3D", "image=barsBlurSA point=axialPSF1wave "
 + "output=barsBlurSAdeconSA normalize show log perform wiener=0.33 "
@@ -264,8 +296,12 @@ IJ.run("Set... ", "zoom=200 x=128 y=128");
 IJ.setMinAndMax(0.0, 10000.0);
 IJ.run("Fire", "");
 
+messageContinue("Notice", "The Blur is now nicely corrected: \n"
+	+ "Aberrations are accounted for. \n"
+	+ "   Finished part 2");
+	
 
-// functions defined in this javascript file follow below
+// Functions defined in this javascript file follow below
 
 
 // abstracted function to draw a test image using another function given as an argument
