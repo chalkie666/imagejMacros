@@ -108,6 +108,17 @@ importClass(Packages.ij.plugin.Duplicator);
 // Main code execution block
 // running functions defined below and ImageJ functions.
 
+// Part 0 biological example
+/*
+imp = IJ.openImage("http://imagej.nih.gov/ij/images/Rat_Hippocampal_Neuron.zip");
+imp = new Duplicator().run(imp, 4, 4, 1, 1, 1, 1);
+imp.setTitle("RHNbl");
+imp.show();
+IJ.run("Fire", "");
+IJ.setMinAndMax(500.0, 4500.0);
+*/
+// do conv and deconv here...
+
 
 //Part 1 - convolution and deconvolution in 2D
 // generate exponential (or linear) chirp stripey image by running the  drawTestImageFunction with expoChirpFunction as argument
@@ -414,4 +425,3 @@ function makeAxialPSF(sa, title1, title2) {
 	IJ.run("Set... ", "zoom=200 x=128 y=128");
 	IJ.run("Fire", "");
 }
-
