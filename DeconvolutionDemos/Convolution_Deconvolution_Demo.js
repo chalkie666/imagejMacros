@@ -1,3 +1,7 @@
+// @OpService ops
+// @UIService ui
+// Script parameters for ops etc. Has to be at the very top for the SciJava framework to get them
+
 /* Convolution - Deconvolution Demo for Fiji/ImageJ
  * 
  * Exponential freq. chirp wave image, with automated convolution / deconvolution demos.
@@ -102,6 +106,10 @@
 importClass(Packages.ij.IJ);
 importClass(Packages.ij.gui.WaitForUserDialog);
 importClass(Packages.ij.plugin.Duplicator);
+importClass(Packages.net.imglib2.img.display.imagej.ImageJFunctions);
+importClass(Packages.net.imglib2.FinalDimensions);
+importClass(Packages.net.imagej.ops.Op);
+importClass(Packages.net.imglib2.img.display.imagej.ImageJFunctions);
 // end of imports
 
 
@@ -212,11 +220,45 @@ messageContinue("The inverse filtered image:", "Inverse filtering is defeated by
 
 // Perform iterative, non negative constrained, deconvolution
 // on the noisy image with the slightly noisy PSF
-// to simulate a real sitiuation. 
+// to simulate a real sitiuation.
+// Use Iterative Deconvolve 3D (DAMAS3) plugin algorithm.
 IJ.selectWindow("Chirp-blur-noise");
 IJ.run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise "
 + "output=Deconvolved normalize show log perform wiener=0.33 "
 + "low=0 z_direction=1 maximum=200 terminate=0.001");
+IJ.resetMinAndMax();
+horizLinePlot();
+
+// Perform Brian's IJ2 Ops Richardson Lucy iterative deconvolution
+// on the noisy image with the slightly noisy PSF
+// to simulate a real sitiuation.
+// Trying to do things the ops way...
+IJ.selectWindow("Chirp-blur-noise");
+chirpBlurNoise = IJ.getImage();
+IJ.selectWindow("PSFwithNoise");
+PSFwNoise = IJ.getImage();
+// wrap IJ1 ImagePlus into IJ2 Img for use in ops
+chirpBlurNoise = ImageJFunctions.wrap(chirpBlurNoise);
+PSFwNoise = ImageJFunctions.wrap(PSFwNoise);
+/*
+ * Here is a constructor for RL decon in ops
+ * (RandomAccessibleInterval out) =
+	net.imagej.ops.deconvolve.RichardsonLucyF(
+==>		RandomAccessibleInterval in1,
+		RandomAccessibleInterval in2,
+		long[] borderSize?,
+		OutOfBoundsFactory obfInput?,
+		OutOfBoundsFactory obfKernel?,
+		Type outType?,
+		ComplexType fftType?,              [16, 16], 1, 1, Img, 1, 20,
+		int maxIterations,
+		boolean nonCirculant?,
+		boolean accelerate?)  
+
+		But for ops.run version we only need rawImage, psf and iterations (and a 4th parameter for TV regularization if usding TV version (why and how????)
+ */
+deconvRLTVResult = ops.run("deconvolve.richardsonLucyTV", chirpBlurNoise, PSFwNoise, 80, 0.001);  // 80 iterations. Use 4th parameter eg 0.1 for TV regularization if use RL with TV
+ui.show("deconvRLTVResult", deconvRLTVResult);
 IJ.resetMinAndMax();
 horizLinePlot();
 
@@ -307,7 +349,9 @@ IJ.run("Fire", "");
 messageContinue("Notice", "The Blur is now nicely corrected: \n"
 	+ "Aberrations are accounted for. \n"
 	+ "   Finished part 2");
-	
+
+// Stopit and Tidyup! again
+IJ.run("Close All", "");
 
 // Functions defined in this javascript file follow below
 
