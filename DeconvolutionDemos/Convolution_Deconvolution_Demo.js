@@ -109,23 +109,11 @@ importClass(Packages.ij.plugin.Duplicator);
 importClass(Packages.net.imglib2.img.display.imagej.ImageJFunctions);
 importClass(Packages.net.imglib2.FinalDimensions);
 importClass(Packages.net.imagej.ops.Op);
-importClass(Packages.net.imglib2.img.display.imagej.ImageJFunctions);
 // end of imports
 
 
 // Main code execution block
 // running functions defined below and ImageJ functions.
-
-// Part 0 biological example
-/*
-imp = IJ.openImage("http://imagej.nih.gov/ij/images/Rat_Hippocampal_Neuron.zip");
-imp = new Duplicator().run(imp, 4, 4, 1, 1, 1, 1);
-imp.setTitle("RHNbl");
-imp.show();
-IJ.run("Fire", "");
-IJ.setMinAndMax(500.0, 4500.0);
-*/
-// do conv and deconv here...
 
 
 //Part 1 - convolution and deconvolution in 2D
