@@ -213,7 +213,7 @@ messageContinue("The inverse filtered image:", "Inverse filtering is defeated by
 IJ.selectWindow("Chirp-blur-noise");
 IJ.run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise "
 + "output=Deconvolved normalize show log perform wiener=0.33 "
-+ "low=0 z_direction=1 maximum=200 terminate=0.001");
++ "low=0 z_direction=1 maximum=100 terminate=0.001");
 IJ.resetMinAndMax();
 horizLinePlot();
 
@@ -228,7 +228,12 @@ PSFwNoise = IJ.getImage();
 // wrap IJ1 ImagePlus into IJ2 Img for use in ops
 chirpBlurNoise = ImageJFunctions.wrap(chirpBlurNoise);
 PSFwNoise = ImageJFunctions.wrap(PSFwNoise);
-deconvRLTVResult = ops.run("deconvolve.richardsonLucyTV", chirpBlurNoise, PSFwNoise, 80, 0.001);  // 80 iterations. Use 4th parameter eg 0.1 for TV regularization if use RL with TV
+
+// Do the ops RL-TV deconvolution
+// For ops.run version we only need rawImage, psf and iterations,
+// and a 4th parameter for TV regularization if using TV version (why and how - the constructor has lots more parameters????)
+deconvRLTVResult = ops.run("deconvolve.richardsonLucyTV", chirpBlurNoise, PSFwNoise, 78, 0.001);  // few 10s of iterations? Use 4th parameter eg 0.001 for TV regularization if use RL with TV
+// show an Img from imglib2 usinig IJ GUI this way:
 ui.show("deconvRLTVResult", deconvRLTVResult);
 IJ.resetMinAndMax();
 horizLinePlot();
