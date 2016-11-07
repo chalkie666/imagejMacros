@@ -46,7 +46,7 @@ IJ.selectWindow("PSF")
 IJ.resetMinAndMax()
 IJ.run("Fire", "")
 
-# get ImagePlus from IJ1 image window for channel 1 of the sample image. 
+# get ImagePlus from IJ1 image window for channel 1 of the sample image and PSF image
 IJ.selectWindow("PSF")
 psfimp = IJ.getImage()
 IJ.selectWindow("C1-confocal-series.tif")
