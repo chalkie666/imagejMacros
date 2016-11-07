@@ -228,23 +228,6 @@ PSFwNoise = IJ.getImage();
 // wrap IJ1 ImagePlus into IJ2 Img for use in ops
 chirpBlurNoise = ImageJFunctions.wrap(chirpBlurNoise);
 PSFwNoise = ImageJFunctions.wrap(PSFwNoise);
-/*
- * Here is a constructor for RL decon in ops
- * (RandomAccessibleInterval out) =
-	net.imagej.ops.deconvolve.RichardsonLucyF(
-==>		RandomAccessibleInterval in1,
-		RandomAccessibleInterval in2,
-		long[] borderSize?,
-		OutOfBoundsFactory obfInput?,
-		OutOfBoundsFactory obfKernel?,
-		Type outType?,
-		ComplexType fftType?,              [16, 16], 1, 1, Img, 1, 20,
-		int maxIterations,
-		boolean nonCirculant?,
-		boolean accelerate?)  
-
-		But for ops.run version we only need rawImage, psf and iterations (and a 4th parameter for TV regularization if usding TV version (why and how????)
- */
 deconvRLTVResult = ops.run("deconvolve.richardsonLucyTV", chirpBlurNoise, PSFwNoise, 80, 0.001);  // 80 iterations. Use 4th parameter eg 0.1 for TV regularization if use RL with TV
 ui.show("deconvRLTVResult", deconvRLTVResult);
 IJ.resetMinAndMax();
