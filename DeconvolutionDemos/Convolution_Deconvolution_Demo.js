@@ -233,7 +233,7 @@ PSFwNoise = ImageJFunctions.wrap(PSFwNoise);
 // For ops.run version we only need rawImage, psf and iterations,
 // and a 4th parameter for TV regularization if using TV version (why and how - the constructor has lots more parameters????)
 deconvRLTVResult = ops.run("deconvolve.richardsonLucyTV", chirpBlurNoise, PSFwNoise, 78, 0.001);  // few 10s of iterations? Use 4th parameter eg 0.001 for TV regularization if use RL with TV
-// show an Img from imglib2 usinig IJ GUI this way:
+// show an Img from imglib2 using IJ GUI this way:
 ui.show("deconvRLTVResult", deconvRLTVResult);
 IJ.resetMinAndMax();
 horizLinePlot();
