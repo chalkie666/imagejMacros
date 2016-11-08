@@ -33,13 +33,14 @@
  * on the fly is broken for java 1.8 (but works for java 1.6)
  * 
  * Iterative Deconvolution 3D plugin from Bob Dougherty
- * http://www.optinav.com/Iterative-Deconvolve-3D.htm
- * http://www.optinav.com/download/Iterative_Deconvolve_3D.class
+ * http://www.optinav.info/Iterative-Deconvolve-3D.htm
+ * http://www.optinav.info/download/Iterative_Deconvolve_3D.class
  * 
  * Gaussian PSF 3D from Bob Dougherty
- * http://www.optinav.com/download/Gaussian_PSF_3D.class
+ * http://www.optinav.info/download/Gaussian_PSF_3D.class
  * or Diffraction PSF 3D also from Bob Dougherty
- * http://www.optinav.com/download/Diffraction_PSF_3D.class
+ * http://www.optinav.info/Diffraction-PSF-3D.htm
+ * http://www.optinav.info/download/Diffraction_PSF_3D.class
  *
  * RandomJ for Poisson noise generation
  * Turn on Erik's  http://imagej.net/ImageScience imageJ update site
