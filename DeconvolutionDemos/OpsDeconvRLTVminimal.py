@@ -32,12 +32,13 @@ IJ.selectWindow("C1-confocal-series.tif")
 IJ.resetMinAndMax()
 IJ.run("Fire", "")
 # Fix the meta data:  z slice spacing.
-IJ.run("Properties...", "channels=1 slices=25 frames=1 unit=um pixel_width=0.0544550 pixel_height=0.0544550 voxel_depth=0.25")
+# no need for this naymore, Joel and Wayne fixed the metadata
+#IJ.run("Properties...", "channels=1 slices=25 frames=1 unit=um pixel_width=0.0544550 pixel_height=0.0544550 voxel_depth=0.6")
 
 # make PSF using Bob D's Diffraction PSF 3D plugin
 # With image meta data matching the confocal sample dataset.
 # input PSF doesnt need to be as large as the image to be deconvolved.
-IJ.run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=510 longitudinal=0 image=54.50 slice=250 width,=64 height,=64 depth,=25 normalization=[Peak = 255] title=PSF")
+IJ.run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=510 longitudinal=0 image=54.50 slice=600 width,=64 height,=64 depth,=13 normalization=[Peak = 255] title=PSF")
 IJ.selectWindow("PSF")
 # We could simulate a confocal PSF by making the square of the WF PSF.
 # But result looks better in this case with optomistic computed WF PSF.  
