@@ -210,6 +210,48 @@ messageContinue("The inverse filtered image:", "Inverse filtering is defeated by
 // Perform iterative, non negative constrained, deconvolution
 // on the noisy image with the slightly noisy PSF
 // to simulate a real sitiuation.
+
+/*
+// IJ builtin commands implemetation of non negative constrained additive iterative deconv algorithm
+// Take blurred noisy image as first guess at model image
+// we will need an image calculator to get differnce image
+ic = new ImageCalculator();
+// loop the following to do iterations until run out of iterations
+
+for(i = 0; i < 10; i++){
+
+	// blur (convolve) current restored image model (guess)  with PSF
+	IJ.run("FD Math...", "image1=Chirp-blur-noise operation=Convolve "
+	+ "image2=PSFwithNoise result=temp do");
+	// scale result to max 10k, so its comparable with current guess
+	scaleIntensities10k("temp", "temp-scaled");
+	IJ.selectWindow("temp-scaled");
+	// calculate the difference between the current guess image and the blurred noisy image
+	var imp1 = WindowManager.getImage("Chirp-blur-noise");
+	var imp2 = WindowManager.getImage("temp-scaled");
+	var impDiff = ic.run("Subtract create", imp1, imp2);
+	impDiff.setTitle("difference");
+	impDiff.show();
+	
+	// update the guess temp image by adding the difference image to it
+	var tempScaledimp = WindowManager.getImage("temp-scaled");
+	temp = ic.run("Add create", tempScaledimp, impDiff);
+	temp.show();
+	// low pass filter the new guess to remove high frequency noise above PSF band limit
+	IJ.selectWindow("temp");
+	IJ.run("Gaussian Blur...", "sigma=2");
+	// apply non negativity constraint: set all -ve values in guess image to zero.
+	IJ.selectWindow("temp");
+	tempClipZero = IJ.getImage();
+	IJ.setThreshold(tempClipZero, -9999999999.9, 0.0000);
+	IJ.run(tempClipZero, "Create Selection", "");
+	IJ.run(tempClipZero, "Set...", "value=0");
+	tempClipZero.setTitle("deconvIJ");
+	tempClipZero.show();
+}  // end of iteration loop
+
+*/
+
 // Use Iterative Deconvolve 3D (DAMAS3) plugin algorithm.
 IJ.selectWindow("Chirp-blur-noise");
 IJ.run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise "
@@ -229,7 +271,6 @@ PSFwNoise = IJ.getImage();
 // wrap IJ1 ImagePlus into IJ2 Img for use in ops
 chirpBlurNoise = ImageJFunctions.wrap(chirpBlurNoise);
 PSFwNoise = ImageJFunctions.wrap(PSFwNoise);
-
 // Do the ops RL-TV deconvolution
 // For ops.run version we only need rawImage, psf and iterations,
 // and a 4th parameter for TV regularization if using TV version (why and how - the constructor has lots more parameters????)
