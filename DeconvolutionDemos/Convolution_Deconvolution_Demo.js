@@ -100,13 +100,57 @@
  * 8) Note the bandwidth (resolution limit) imposed by the blur.
  * 9) Note that high spatial frequency features (smaller objects) close to the resolution limit
  * 		have their contrast more strongly attenuated than lower spatial frequency (large) features.
+ *
+ * What is iterative constrained deconvolution - an algorithm explination:
+ * from DAVID A. AGARD et al. meth cell biol 1989
+ * http://dx.doi.org/10.1016/S0091-679X(08)60986-3   
+ * .... significantly improve performance for three-dimensional optical sectioning data. 
+ * The method is stable, and shows substantially accelerated con-vergence compared to previous methods.
+ * Convergence is reached in 5-10 cycles (instead of 20-50) and since most of the improvement occurs in the first 5 cycles,
+ * iterations can be terminated early with little degradation.
+ * The strategy is to develop a positively constrained solution, g, that,
+ * when convolved with the known smearing function s, will regenerate the observed data o.
+ * The pixel-by-pixel differences between the convolved guess and the observed data are used to update the guess.
+ * Two different update schemes can be used: an additive method initially developed by van Cittert
+ * and later modified by Jannson (Jannson et al., 1970) and by us (Agard et al., 1981),
+ * and a multiplicative method developed by Gold (1964): 
+ * 				(a) o^k = i^k * s
+ * eq 12		(b) i^k+1 = i^k + y(o)(o — o^k)
+ * 				(c) if i^k+1 < 0 then i^k+1 = 0   (non negativity constraint)
+ * 				(d) k = k + 1
+ * 				
+ * 				y = 1 — [o^k — A]^2 / A^2 
+ * 			where 
+ * 			i is what we want to know - the restored image
+ * 			i^k is the current guess at i
+ * 			o is observed blurry, noisy image
+ * 			o^k is the current guess i^k blurred with s (a)
+ * 			A is a constant set to (the maximum value of o)/2.
+ * 			
+ * For the Gold method, the update equation on line b is changed to 
+ * 		(b') ik(ook) 
+ * 		
+ * In three dimensions these schemes suffer from rather slow convergence, although the Gold method is faster.
+ * The problem stems from inadequate correction of the high-frequency components.
+ * This can be seen by the following argument performed only with the additive method for simplicity. 
+ * At each cycle we desire to correct our current guess with a function, 6, so that 
+ * o ~ (g, + 8) * s or in Fourier space: 0 (G, + 6)S. Rearranging, we get
+ * 8 = (0 — G,S)IS (13) 
+ * From this we can see that a better approximation to the update is to use an inverse filtered version
+ * of the difference between the observed data and the convolved guess.
+ * In practice, we use a Wiener filter to minimize effects of noise and only perform the inverse filtered update
+ * for the first two cycles. After that, we switch to the modified Van Cittert update described above [Eq. (12)].
+ * At each cycle, the new guess is corrected to maintain positivity and any other desired real-space constraints,
+ * such as spatial boundedness. Every five cycles or so, the guess is smoothed with a Gaussian filter to ....
  */
 
 
 // imports first please
 importClass(Packages.ij.IJ);
+importClass(Packages.ij.WindowManager);
 importClass(Packages.ij.gui.WaitForUserDialog);
 importClass(Packages.ij.plugin.Duplicator);
+importClass(Packages.ij.plugin.ImageCalculator);
 importClass(Packages.net.imglib2.img.display.imagej.ImageJFunctions);
 importClass(Packages.net.imglib2.FinalDimensions);
 importClass(Packages.net.imagej.ops.Op);
@@ -216,40 +260,68 @@ messageContinue("The inverse filtered image:", "Inverse filtering is defeated by
 // Take blurred noisy image as first guess at model image
 // we will need an image calculator to get differnce image
 ic = new ImageCalculator();
-// loop the following to do iterations until run out of iterations
 
-for(i = 0; i < 10; i++){
+// set needed variables then loop the following to do iterations until run out of iterations
+temp = new Duplicator().run(WindowManager.getImage("Chirp-blur-noise"));
+temp.setTitle("temp");
+temp.show();
+ChirpBlurNoiseimp = WindowManager.getImage("Chirp-blur-noise");
+var iterations = 10;
+for (i=0; i<iterations; i++) {
 
-	// blur (convolve) current restored image model (guess)  with PSF
-	IJ.run("FD Math...", "image1=Chirp-blur-noise operation=Convolve "
-	+ "image2=PSFwithNoise result=temp do");
+	// blur (convolve) current restored image model (guess) with PSF
+	IJ.run("FD Math...", "image1=temp operation=Convolve "
+	+ "image2=PSFwithNoise result=tempConv do");
 	// scale result to max 10k, so its comparable with current guess
-	scaleIntensities10k("temp", "temp-scaled");
-	IJ.selectWindow("temp-scaled");
+	scaleIntensities10k("tempConv", "tempConvScaled");
+	tempConvimp = WindowManager.getImage("tempConv");
+	tempConvimp.changes = false;
+	tempConvimp.close();
+	IJ.selectWindow("tempConvScaled");
 	// calculate the difference between the current guess image and the blurred noisy image
-	var imp1 = WindowManager.getImage("Chirp-blur-noise");
-	var imp2 = WindowManager.getImage("temp-scaled");
-	var impDiff = ic.run("Subtract create", imp1, imp2);
+	var tempConvScaledimp = WindowManager.getImage("tempConvScaled");
+	var impDiff = ic.run("Subtract create", ChirpBlurNoiseimp, tempConvScaledimp);
 	impDiff.setTitle("difference");
 	impDiff.show();
 	
 	// update the guess temp image by adding the difference image to it
-	var tempScaledimp = WindowManager.getImage("temp-scaled");
-	temp = ic.run("Add create", tempScaledimp, impDiff);
+	var tempAdd = ic.run("Add create", tempConvScaledimp, impDiff);
+	tempConvScaledimp.changes = false;
+	tempConvScaledimp.close();
+	impDiff.changes = false;
+	impDiff.close();
+	temp.changes = false;
+	temp.close();
+	temp = new Duplicator().run(tempAdd);
+	temp.setTitle("temp");
+	tempAdd.changes = false;
+	tempAdd.close();
 	temp.show();
+	temp.setTitle("temp");
+	IJ.resetMinAndMax();
 	// low pass filter the new guess to remove high frequency noise above PSF band limit
 	IJ.selectWindow("temp");
 	IJ.run("Gaussian Blur...", "sigma=2");
 	// apply non negativity constraint: set all -ve values in guess image to zero.
-	IJ.selectWindow("temp");
-	tempClipZero = IJ.getImage();
+	var tempClipZero = new Duplicator().run(temp);
+	tempClipZero.setTitle("tempClipZero");
+	tempClipZero.show();
 	IJ.setThreshold(tempClipZero, -9999999999.9, 0.0000);
 	IJ.run(tempClipZero, "Create Selection", "");
 	IJ.run(tempClipZero, "Set...", "value=0");
-	tempClipZero.setTitle("deconvIJ");
-	tempClipZero.show();
+	temp.changes = false;
+	temp.close();
+	temp = new Duplicator().run(tempClipZero);
+	temp.setTitle("temp");
+	tempClipZero.changes = false;
+	tempClipZero.close();
+	temp.show();
+	IJ.resetMinAndMax();
+	
 }  // end of iteration loop
-
+IJ.selectWindow("temp");
+temp.setTitle("deconvIJ");
+horizLinePlot();
 */
 
 // Use Iterative Deconvolve 3D (DAMAS3) plugin algorithm.
