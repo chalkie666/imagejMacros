@@ -255,7 +255,7 @@ messageContinue("The inverse filtered image:", "Inverse filtering is defeated by
 // on the noisy image with the slightly noisy PSF
 // to simulate a real sitiuation.
 
-/*
+
 // IJ builtin commands implemetation of non negative constrained additive iterative deconv algorithm
 // Take blurred noisy image as first guess at model image
 // we will need an image calculator to get differnce image
@@ -266,7 +266,7 @@ temp = new Duplicator().run(WindowManager.getImage("Chirp-blur-noise"));
 temp.setTitle("temp");
 temp.show();
 ChirpBlurNoiseimp = WindowManager.getImage("Chirp-blur-noise");
-var iterations = 10;
+var iterations = 200;
 for (i=0; i<iterations; i++) {
 
 	// blur (convolve) current restored image model (guess) with PSF
@@ -292,7 +292,10 @@ for (i=0; i<iterations; i++) {
 	impDiff.close();
 	temp.changes = false;
 	temp.close();
-	temp = new Duplicator().run(tempAdd);
+	tempAdd.setTitle("tempAdd");
+	tempAdd.show();
+	//temp = new Duplicator().run(tempAdd);
+	temp = new Duplicator().run(WindowManager.getImage("tempAdd"));
 	temp.setTitle("temp");
 	tempAdd.changes = false;
 	tempAdd.close();
@@ -303,26 +306,48 @@ for (i=0; i<iterations; i++) {
 	IJ.selectWindow("temp");
 	IJ.run("Gaussian Blur...", "sigma=2");
 	// apply non negativity constraint: set all -ve values in guess image to zero.
-	var tempClipZero = new Duplicator().run(temp);
+	var tempClipZero = new Duplicator().run(WindowManager.getImage("temp"));
 	tempClipZero.setTitle("tempClipZero");
 	tempClipZero.show();
 	IJ.setThreshold(tempClipZero, -9999999999.9, 0.0000);
 	IJ.run(tempClipZero, "Create Selection", "");
 	IJ.run(tempClipZero, "Set...", "value=0");
+	tempClipZero.setTitle("tempClipZero");
+	tempClipZero.show();
+
+	//close and kill the temp image
 	temp.changes = false;
 	temp.close();
-	temp = new Duplicator().run(tempClipZero);
-	temp.setTitle("temp");
-	tempClipZero.changes = false;
-	tempClipZero.close();
-	temp.show();
+	IJ.run("Collect Garbage", ""); // make sure closed images are really gone
+	//messageContinue("Close imp:", "closed temp, Continue?");
+
+	// get the right image to duplicate
+	IJ.selectWindow("tempClipZero");
+	//messageContinue("image OK?:", "tempClipZero image OK?, Continue?");
+	// make sure
+	//IJ.selectWindow("tempClipZero");
+	
+	//temp = new Duplicator().run(WindowManager.getImage("tempClipZero")); // why doesnt this work!?????!
+	// Use IJ.run(Duplicate...
+	IJ.run("Select All", "");
+	IJ.run("Duplicate...", "title=temp");
+	//temp.setTitle("temp");
+	//temp.show();
+	temp = WindowManager.getImage("temp");
+
 	IJ.resetMinAndMax();
+	//messageContinue("show new temp:", "new temp image ok?, Continue?");
+	tempClipZero.changes = false;
+	tempClipZero.close();
+	//messageContinue("Iterations:", "this is the " + i + " iteration, Continue?");
+
+	
 	
 }  // end of iteration loop
 IJ.selectWindow("temp");
 temp.setTitle("deconvIJ");
 horizLinePlot();
-*/
+
 
 // Use Iterative Deconvolve 3D (DAMAS3) plugin algorithm.
 IJ.selectWindow("Chirp-blur-noise");
