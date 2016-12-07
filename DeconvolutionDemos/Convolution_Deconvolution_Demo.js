@@ -266,7 +266,7 @@ temp = new Duplicator().run(WindowManager.getImage("Chirp-blur-noise"));
 temp.setTitle("temp");
 temp.show();
 ChirpBlurNoiseimp = WindowManager.getImage("Chirp-blur-noise");
-var iterations = 200;
+var iterations = 25;
 for (i=0; i<iterations; i++) {
 
 	// blur (convolve) current restored image model (guess) with PSF
@@ -278,14 +278,15 @@ for (i=0; i<iterations; i++) {
 	tempConvimp.changes = false;
 	tempConvimp.close();
 	IJ.selectWindow("tempConvScaled");
-	// calculate the difference between the current guess image and the blurred noisy image
+	// calculate the difference between the blurred noisy image and the current guess image 
 	var tempConvScaledimp = WindowManager.getImage("tempConvScaled");
 	var impDiff = ic.run("Subtract create", ChirpBlurNoiseimp, tempConvScaledimp);
 	impDiff.setTitle("difference");
 	impDiff.show();
-	
+	//messageContinue("Difference image:", "looks OK? Continue?");
+
 	// update the guess temp image by adding the difference image to it
-	var tempAdd = ic.run("Add create", tempConvScaledimp, impDiff);
+	var tempAdd = ic.run("Add create", temp, impDiff); // wrong thing to add to, need to add to non blurred image!!!
 	tempConvScaledimp.changes = false;
 	tempConvScaledimp.close();
 	impDiff.changes = false;
@@ -294,19 +295,14 @@ for (i=0; i<iterations; i++) {
 	temp.close();
 	tempAdd.setTitle("tempAdd");
 	tempAdd.show();
-	//temp = new Duplicator().run(tempAdd);
-	temp = new Duplicator().run(WindowManager.getImage("tempAdd"));
-	temp.setTitle("temp");
-	tempAdd.changes = false;
-	tempAdd.close();
-	temp.show();
-	temp.setTitle("temp");
-	IJ.resetMinAndMax();
+	//messageContinue("Added image:", "looks OK? Continue?");
+
 	// low pass filter the new guess to remove high frequency noise above PSF band limit
-	IJ.selectWindow("temp");
-	IJ.run("Gaussian Blur...", "sigma=2");
+	IJ.selectWindow("tempAdd");
+	IJ.run("Gaussian Blur...", "sigma=0.5");
+	
 	// apply non negativity constraint: set all -ve values in guess image to zero.
-	var tempClipZero = new Duplicator().run(WindowManager.getImage("temp"));
+	var tempClipZero = new Duplicator().run(WindowManager.getImage("tempAdd"));
 	tempClipZero.setTitle("tempClipZero");
 	tempClipZero.show();
 	IJ.setThreshold(tempClipZero, -9999999999.9, 0.0000);
@@ -314,19 +310,16 @@ for (i=0; i<iterations; i++) {
 	IJ.run(tempClipZero, "Set...", "value=0");
 	tempClipZero.setTitle("tempClipZero");
 	tempClipZero.show();
-
-	//close and kill the temp image
-	temp.changes = false;
-	temp.close();
+	//close and kill the tempAdd image
+	tempAdd.changes = false;
+	tempAdd.close();
 	IJ.run("Collect Garbage", ""); // make sure closed images are really gone
 	//messageContinue("Close imp:", "closed temp, Continue?");
-
 	// get the right image to duplicate
 	IJ.selectWindow("tempClipZero");
 	//messageContinue("image OK?:", "tempClipZero image OK?, Continue?");
 	// make sure
 	//IJ.selectWindow("tempClipZero");
-	
 	//temp = new Duplicator().run(WindowManager.getImage("tempClipZero")); // why doesnt this work!?????!
 	// Use IJ.run(Duplicate...
 	IJ.run("Select All", "");
@@ -340,13 +333,13 @@ for (i=0; i<iterations; i++) {
 	tempClipZero.changes = false;
 	tempClipZero.close();
 	//messageContinue("Iterations:", "this is the " + i + " iteration, Continue?");
+	IJ.run("Collect Garbage", ""); // make sure we tidy up objects 
 
-	
-	
 }  // end of iteration loop
 IJ.selectWindow("temp");
 temp.setTitle("deconvIJ");
 horizLinePlot();
+
 
 
 // Use Iterative Deconvolve 3D (DAMAS3) plugin algorithm.
@@ -357,6 +350,7 @@ IJ.run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise "
 IJ.resetMinAndMax();
 horizLinePlot();
 
+/*
 // Perform Brian's IJ2 Ops Richardson Lucy iterative deconvolution
 // on the noisy image with the slightly noisy PSF
 // to simulate a real sitiuation.
@@ -376,6 +370,7 @@ deconvRLTVResult = ops.run("deconvolve.richardsonLucyTV", chirpBlurNoise, PSFwNo
 ui.show("deconvRLTVResult", deconvRLTVResult);
 IJ.resetMinAndMax();
 horizLinePlot();
+*/
 
 messageContinue("The restored result image:", "The image contrast is restored up to the resolution and noise limit. \n"
 + "The pixel intensity values of the smaller and smaller features \n"
