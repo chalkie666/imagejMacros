@@ -337,7 +337,7 @@ for (i=0; i<iterations; i++) {
 	tempClipZero.changes = false;
 	tempClipZero.close();
 	//messageContinue("Iterations:", "this is the " + i + " iteration, Continue?");
-	IJ.run("Collect Garbage", ""); // make sure we tidy up objects 
+	IJ.run("Collect Garbage", ""); // make sure we tidy up objects
 
 }  // end of iteration loop
 IJ.selectWindow("temp");
