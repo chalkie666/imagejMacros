@@ -266,7 +266,7 @@ temp = new Duplicator().run(WindowManager.getImage("Chirp-blur-noise"));
 temp.setTitle("temp");
 temp.show();
 ChirpBlurNoiseimp = WindowManager.getImage("Chirp-blur-noise");
-var iterations = 25;
+var iterations = 76; // multiples of 5 plus 1 please, as we smooth every 5 iterations and 0th iteration.
 for (i=0; i<iterations; i++) {
 
 	// blur (convolve) current restored image model (guess) with PSF
@@ -286,7 +286,7 @@ for (i=0; i<iterations; i++) {
 	//messageContinue("Difference image:", "looks OK? Continue?");
 
 	// update the guess temp image by adding the difference image to it
-	var tempAdd = ic.run("Add create", temp, impDiff); // wrong thing to add to, need to add to non blurred image!!!
+	var tempAdd = ic.run("Add create", temp, impDiff);
 	tempConvScaledimp.changes = false;
 	tempConvScaledimp.close();
 	impDiff.changes = false;
@@ -298,10 +298,14 @@ for (i=0; i<iterations; i++) {
 	//messageContinue("Added image:", "looks OK? Continue?");
 
 	// low pass filter the new guess to remove high frequency noise above PSF band limit
-	IJ.selectWindow("tempAdd");
-	IJ.run("Gaussian Blur...", "sigma=0.5");
-	
+	// Do it every 5 iterations perhaps?
+	if (i % 5 == 0) {
+		IJ.selectWindow("tempAdd");
+		IJ.run("Gaussian Blur...", "sigma=1");
+	}
+
 	// apply non negativity constraint: set all -ve values in guess image to zero.
+	IJ.selectWindow("tempAdd");
 	var tempClipZero = new Duplicator().run(WindowManager.getImage("tempAdd"));
 	tempClipZero.setTitle("tempClipZero");
 	tempClipZero.show();
@@ -337,9 +341,13 @@ for (i=0; i<iterations; i++) {
 
 }  // end of iteration loop
 IJ.selectWindow("temp");
-temp.setTitle("deconvIJ");
+scaleIntensities10k("temp", "tempReScaled");
+temp.changes = false;
+temp.close();
+tempReScaled = WindowManager.getImage("tempReScaled");
+tempReScaled.setTitle("deconvIJ");
+IJ.selectWindow("deconvIJ");
 horizLinePlot();
-
 
 
 // Use Iterative Deconvolve 3D (DAMAS3) plugin algorithm.
@@ -350,7 +358,7 @@ IJ.run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise "
 IJ.resetMinAndMax();
 horizLinePlot();
 
-/*
+
 // Perform Brian's IJ2 Ops Richardson Lucy iterative deconvolution
 // on the noisy image with the slightly noisy PSF
 // to simulate a real sitiuation.
@@ -370,7 +378,7 @@ deconvRLTVResult = ops.run("deconvolve.richardsonLucyTV", chirpBlurNoise, PSFwNo
 ui.show("deconvRLTVResult", deconvRLTVResult);
 IJ.resetMinAndMax();
 horizLinePlot();
-*/
+
 
 messageContinue("The restored result image:", "The image contrast is restored up to the resolution and noise limit. \n"
 + "The pixel intensity values of the smaller and smaller features \n"
