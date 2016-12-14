@@ -172,6 +172,9 @@ messageContinue("Notice", "The pattern has the same contrast, 1-10000 photons,\n
 	+ "   (PSF = image of a point light source) \n"
 	+ "   for convolution and deconvolution, Continue?");
 
+//Test ij log output
+IJ.log("Iteration is a cool way to do deconv");
+
 // generate squared value (quasi-confocal) 2D Diffraction model PSF
 // for blurring (de-sharpening) by convolution and deblurring (re-shaprening or restoring) by deconvolution
 IJ.run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=510 "
@@ -286,7 +289,12 @@ for (i=0; i<iterations; i++) {
 	var impDiff = ic.run("Subtract create", ChirpBlurNoiseimp, tempConvScaledimp);
 	impDiff.setTitle("difference");
 	impDiff.show();
-	//messageContinue("Difference image:", "looks OK? Continue?");
+	//messageContinue("Difference image:", "looks OK? Continue?");
+	// get the mean of the diff image to track convergence... it should get closer to zero each iteration. 
+	// get the input image statistics object with the MEAN
+	var meanOfDiffImage = impDiff.getStatistics().mean;
+	// then write it onto the IJ log window so we can see it as the iterations run through
+	IJ.log("Iteration " + i + " MeanOfDiffImage =" + meanOfDiffImage);
 
 	// update the guess temp image by adding the difference image to it
 	var tempAdd = ic.run("Add create", temp, impDiff);
