@@ -224,7 +224,10 @@ messageContinue("Notice", "The inverse filter gives a perfect result \n"
 // Generate more realistic test image that contains noise
 // so we can demo how to deal with that. 
 IJ.selectWindow("Chirp-blur-scaled");
-//Poisson modulatory noise, like photon shot noise. The "mean" parameter is ignored in modulatory mode. 
+// Add noise with a certain SD
+//IJ.run("Add Specified Noise...", "standard=0.2");
+//renameImage("Chirp-blur-scaled", "Chirp-blur-noise");
+// Add Poisson modulatory noise, like photon shot noise. The "mean" parameter is ignored in modulatory mode. 
 IJ.run("RandomJ Poisson", "mean=10.0 insertion=Modulatory");
 renameImage("Chirp-blur-scaled with modulatory Poisson noise", "Chirp-blur-noise");
 IJ.selectWindow("Chirp-blur-noise");
