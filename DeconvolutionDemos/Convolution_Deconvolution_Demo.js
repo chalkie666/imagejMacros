@@ -309,9 +309,18 @@ for (i=0; i<iterations; i++) {
 	var tempClipZero = new Duplicator().run(WindowManager.getImage("tempAdd"));
 	tempClipZero.setTitle("tempClipZero");
 	tempClipZero.show();
-	IJ.setThreshold(tempClipZero, -9999999999.9, 0.0000);
+
+	var minTempClipZero = tempClipZero.getStatistics().min;
+	IJ.setThreshold(tempClipZero, minTempClipZero, 0.0);
+	//messageContinue("below zeros:", "below zeros thresholded?, Continue?");
 	IJ.run(tempClipZero, "Create Selection", "");
-	IJ.run(tempClipZero, "Set...", "value=0");
+	//messageContinue("below zeros selected:", "below zeros selected?, Continue?");
+	// carefull: if no pixels below 0 then nothing selected and all image is set to zero!
+	if (minTempClipZero < -0.000000000001) {
+		IJ.run(tempClipZero, "Set...", "value=0.0");
+		}
+	//messageContinue("below zeros set to zero:", "below zeros set to zero?, Continue?");
+
 	tempClipZero.setTitle("tempClipZero");
 	tempClipZero.show();
 	//close and kill the tempAdd image
