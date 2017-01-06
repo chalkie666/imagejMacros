@@ -384,7 +384,9 @@ IJ.resetMinAndMax();
 horizLinePlot();
 
 
-// Perform Brian's IJ2 Ops Richardson Lucy iterative deconvolution
+// Perform Brian's IJ2 Ops implementation of
+// Acellerated Richardson Lucy iterative deconvolution,
+// with Total Variation regularization
 // on the noisy image with the slightly noisy PSF
 // to simulate a real sitiuation.
 // Trying to do things the ops way...
@@ -398,7 +400,7 @@ PSFwNoise = ImageJFunctions.wrap(PSFwNoise);
 // Do the ops RL-TV deconvolution
 // For ops.run version we only need rawImage, psf and iterations,
 // and a 4th parameter for TV regularization if using TV version (why and how - the constructor has lots more parameters????)
-deconvRLTVResult = ops.run("deconvolve.richardsonLucyTV", chirpBlurNoise, PSFwNoise, 78, 0.001);  // few 10s of iterations? Use 4th parameter eg 0.001 for TV regularization if use RL with TV
+deconvRLTVResult = ops.run("deconvolve.richardsonLucyTV", chirpBlurNoise, PSFwNoise, null, null, null, null, null, 78, false, true, 0.001);  // few 10s of iterations? Use 4th parameter eg 0.001 for TV regularization if use RL with TV
 // show an Img from imglib2 using IJ GUI this way:
 ui.show("deconvRLTVResult", deconvRLTVResult);
 IJ.resetMinAndMax();
