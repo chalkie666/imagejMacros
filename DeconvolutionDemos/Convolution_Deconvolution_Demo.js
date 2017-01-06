@@ -151,6 +151,7 @@ importClass(Packages.ij.WindowManager);
 importClass(Packages.ij.gui.WaitForUserDialog);
 importClass(Packages.ij.plugin.Duplicator);
 importClass(Packages.ij.plugin.ImageCalculator);
+importClass(Packages.ij.process.ImageStatistics);
 importClass(Packages.net.imglib2.img.display.imagej.ImageJFunctions);
 importClass(Packages.net.imglib2.FinalDimensions);
 importClass(Packages.net.imagej.ops.Op);
@@ -266,6 +267,7 @@ messageContinue("The inverse filtered image:", "Inverse filtering is defeated by
 // Take blurred noisy image as first guess at model image
 // we will need an image calculator to get differnce image
 ic = new ImageCalculator();
+imgStats = new ImageStatistics();
 
 // set needed variables then loop the following to do iterations until run out of iterations
 temp = new Duplicator().run(WindowManager.getImage("Chirp-blur-noise"));
@@ -290,11 +292,14 @@ for (i=0; i<iterations; i++) {
 	impDiff.setTitle("difference");
 	impDiff.show();
 	//messageContinue("Difference image:", "looks OK? Continue?");
-	// get the mean of the diff image to track convergence... it should get closer to zero each iteration. 
-	// get the input image statistics object with the MEAN
-	var meanOfDiffImage = impDiff.getStatistics().mean;
+	// get the max and SD of the diff image to track convergence... it should get closer to zero each iteration. 
+	// get the input image statistics object with the MAX
+	var maxOfDiffImage = impDiff.getStatistics().max;
+	//var stats = imgStats.getStatistics(impDiff);
+	//var SDOfDiffImage = theStats.stdDev;
 	// then write it onto the IJ log window so we can see it as the iterations run through
-	IJ.log("Iteration " + i + " MeanOfDiffImage =" + meanOfDiffImage);
+	IJ.log("Iteration " + i + " MaxOfDiffImage =" + maxOfDiffImage);
+	//IJ.log("Iteration " + i + " MaxOfDiffImage =" + maxOfDiffImage + " StDevOfDiffImage =" + SDOfDiffImage);
 
 	// update the guess temp image by adding the difference image to it
 	var tempAdd = ic.run("Add create", temp, impDiff);
