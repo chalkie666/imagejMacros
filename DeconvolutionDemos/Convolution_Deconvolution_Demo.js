@@ -383,13 +383,13 @@ IJ.run("Iterative Deconvolve 3D", "image=Chirp-blur-noise point=PSFwithNoise "
 IJ.resetMinAndMax();
 horizLinePlot();
 
-
-// Perform Brian's IJ2 Ops implementation of
-// Acellerated Richardson Lucy iterative deconvolution,
-// with Total Variation regularization
-// on the noisy image with the slightly noisy PSF
-// to simulate a real sitiuation.
-// Trying to do things the ops way...
+/*
+Perform Brian's IJ2 Ops implementation of
+Acellerated Richardson Lucy iterative deconvolution,
+with Total Variation regularization on the noisy image 
+with the slightly noisy PSF to simulate a real sitiuation.
+Trying to do things the ops way...
+*/
 IJ.selectWindow("Chirp-blur-noise");
 chirpBlurNoise = IJ.getImage();
 IJ.selectWindow("PSFwithNoise");
