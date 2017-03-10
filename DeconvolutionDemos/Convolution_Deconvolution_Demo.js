@@ -5,7 +5,7 @@
 /* Convolution - Deconvolution Demo for Fiji/ImageJ
  * 
  * Exponential freq. chirp wave image, with automated convolution / deconvolution demos.
- * Shows the point of doing image resortation aka deconvolution
+ * Shows the point of doing image restoration a.k.a. deconvolution
  * as well as differences between simple inverse filters and constrained iterative methods. 
  * 
  * 
@@ -274,7 +274,8 @@ temp = new Duplicator().run(WindowManager.getImage("Chirp-blur-noise"));
 temp.setTitle("temp");
 temp.show();
 ChirpBlurNoiseimp = WindowManager.getImage("Chirp-blur-noise");
-var iterations = 76; // multiples of 5 plus 1 please, as we smooth every 5 iterations and 0th iteration.
+var iterations = 76;
+ // multiples of 5 plus 1 please, as we smooth every 5 iterations and 0th iteration.
 for (i=0; i<iterations; i++) {
 
 	// blur (convolve) current restored image model (guess) with PSF
@@ -360,7 +361,8 @@ for (i=0; i<iterations; i++) {
 	IJ.resetMinAndMax();
 	//messageContinue("show new temp:", "new temp image ok?, Continue?");
 	tempClipZero.changes = false;
-	tempClipZero.close();
+	tempClipZero.close();
+
 	//messageContinue("Iterations:", "this is the " + i + " iteration, Continue?");
 	IJ.run("Collect Garbage", ""); // make sure we tidy up objects
 
@@ -385,9 +387,11 @@ horizLinePlot();
 
 /*
 Perform Brian's IJ2 Ops implementation of
-Acellerated Richardson Lucy iterative deconvolution,
+Acellerated Richardson Lucy iterative deconvolution
+,
 with Total Variation regularization on the noisy image 
-with the slightly noisy PSF to simulate a real sitiuation.
+with the slightly noisy PSF
+ to simulate a real sitiuation.
 Trying to do things the ops way...
 */
 IJ.selectWindow("Chirp-blur-noise");
