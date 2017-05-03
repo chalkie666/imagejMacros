@@ -177,7 +177,7 @@ messageContinue("Notice", "The pattern has the same contrast, 1-10000 photons,\n
 IJ.log("Iteration is a cool way to do deconv");
 
 // generate squared value (quasi-confocal) 2D Diffraction model PSF
-// for blurring (de-sharpening) by convolution and deblurring (re-shaprening or restoring) by deconvolution
+// for blurring (de-sharpening) by convolution and deblurring (re-sharpening or restoring) by deconvolution
 IJ.run("Diffraction PSF 3D", "index=1.520 numerical=1.42 wavelength=510 "
 + "longitudinal=0 image=10 slice=200 width,=512 height,=512 depth,=1 "
 + "normalization=[Sum of pixel values = 1] title=PSF");
