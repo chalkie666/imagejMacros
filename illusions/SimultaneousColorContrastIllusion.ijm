@@ -1,3 +1,6 @@
+// simultaneous colour contrast illusion
+// same colour appears different in context of surrounding by other colours
+
 newImage("SimultaneousColorContrastIllusion", "RGB White", 1000, 500, 1);
 makeRectangle(15, 15, 470, 470);
 setForegroundColor(255, 255, 0);

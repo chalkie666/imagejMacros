@@ -8,7 +8,7 @@
 // and with white spots and colored spots. 
 // with coloured spots the "moving" spot may appear to change colour
 // halfway through its "motion", but it can not be true,
-// since the other spot is not show yet. 
+// since the other spot is not shown yet. 
 
 
 newImage("phi motion illusion", "RGB Black", 256, 256, 1);
