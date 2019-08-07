@@ -34,5 +34,19 @@ for (j = 0; j < h; j++)
 	setPixel(i, j, colour);
 	}
 
-// TODO - draw yellow circles behind 2 of the stripes
+// draw yellow circles behind 2 of the stripes
 // different colour stripes for different circles
+
+// make oval selection to draw in
+makeOval(70, 70, 70, 70);
+
+// get the pixels locations of the pixels in the ROI as 2 arrays
+Roi.getContainedPoints(xpoints, ypoints);
+
+// for the current line colour to replace, 
+// fill in the circle with yellow only in the pixels of that line colour
+replaceColour = blue;
+for (i = 0; i < xpoints.length; i++)  {
+	if ((getPixel(xpoints[i], ypoints[i])) == replaceColour)
+		setPixel(xpoints[i], ypoints[i], yellow);
+}
