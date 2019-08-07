@@ -7,12 +7,12 @@ h = 512;
 // stripes Line height
 lineHeight = 4;
 
-// RGB colours
-
+// RGB colours, and array of colour names for stripes
 yellow = 0x999900;
 red = 0xbb0000;
-green = 0x009900
-blue = 0x0000ff
+green = 0x009900;
+blue = 0x0000ff;
+stripesColours = newArray(red, green, blue);
 
 // black image to fill in
 newImage("Muncker's illusion", "RGB Black", w, h, 1);
@@ -34,19 +34,31 @@ for (j = 0; j < h; j++)
 	setPixel(i, j, colour);
 	}
 
-// draw yellow circles behind 2 of the stripes
-// different colour stripes for different circles
+// Loop to draw several yellow "circles" over all stripes except 1 of the coloured stripes
+// leave 1 different colour stripe for the different circles
+for (i = 0; i < stripesColours.length; i++) {
+replaceColour = stripesColours[i];
 
 // make oval selection to draw in
-makeOval(70, 70, 70, 70);
+makeOval(100*(i+1), 100*(i+1), 70, 70);
 
 // get the pixels locations of the pixels in the ROI as 2 arrays
 Roi.getContainedPoints(xpoints, ypoints);
 
 // for the current line colour to replace, 
 // fill in the circle with yellow only in the pixels of that line colour
-replaceColour = blue;
-for (i = 0; i < xpoints.length; i++)  {
-	if ((getPixel(xpoints[i], ypoints[i])) == replaceColour)
-		setPixel(xpoints[i], ypoints[i], yellow);
+	for (j = 0; j < xpoints.length; j++)  {
+		if ((getPixel(xpoints[j], ypoints[j])) != replaceColour)
+			setPixel(xpoints[j], ypoints[j], yellow);
+	}
 }
+Roi.remove;
+
+// Add an explination test
+// on the image in a non-destructive overlay.
+
+text = "The circles are the same colour!";
+setFont("SansSerif", 24, " antialiased");
+makeText(text, 10, 20);
+run("Add Selection...", "stroke=yellow fill=#660000ff new");
+run("Select None");
