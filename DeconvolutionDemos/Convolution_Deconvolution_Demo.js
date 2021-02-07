@@ -213,6 +213,7 @@ messageContinue("Notice", "The smaller the features are,\n"
 
 // Fourier domain math deconvolve: inverse filter with PSFwithNoise.
 // A little noise in PSF avoids divide by zero
+// see https://imagej.nih.gov/ij/macros/DeconvolutionDemo.txt
 // needs square power of 2 sized images!!! so 1024x1024 or 512x512 here I guess.
 // Above, we used FD math to do the convolution as well.
 IJ.run("FD Math...", "image1=Chirp-blur32bit operation=Deconvolve "
