@@ -107,9 +107,11 @@ Ext.CLIJ2_clear();
 
 // open the test raw image and empirical PSF image
 // tidy up the image titles for clarity.
-open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
+//open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
+open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 rename("raw")
-open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
+//open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
+open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64.tif");
 rename("psf")
 
 // make a working image copy of raw on the GPU, to do the interations on: the guess image
@@ -129,8 +131,7 @@ sigma_y = 1.0;
 sigma_z = 1.0;
 Ext.CLIJ2_gaussianBlur3D(guessGPU, gaussGuessGPU, sigma_x, sigma_y, sigma_z);
 Ext.CLIJ2_pull(gaussGuessGPU);
-// clear GPU
-//Ext.CLIJ2_clear();
+
 
 // push images needed to GPU, gaussGuessGPU is already there, so need to push PSF image
 psfGPU = "psf";
@@ -189,3 +190,5 @@ for (i=0; i<itersGeometric; i++) {
 //end algebraic iterations for loop
 }
 
+// clear GPU
+Ext.CLIJ2_clear();
