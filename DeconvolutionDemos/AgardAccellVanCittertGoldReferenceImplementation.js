@@ -20,7 +20,7 @@ with a restrictive license from UCSF/API/GE/Cytiva
  *
  * Thanks:
  * 	
- * 	For code/tools - the authors of the plugins used here, especially BIG@EPFL (DeconvolutionLab2)
+ * 	For code/tools - the authors of the plugins used here, especially BIG@EPFL (DeconvolutionLab2) 
  * 	and all the contributors to imageJ and Fiji. 
  * 	
  *  For ideas: Robert Haase and Brian Northan.
@@ -47,7 +47,7 @@ The PSF closely matching the raw image data
 is more important for the result image quality than the choice of algorithm. 
 Here we will use a small 3D widefield test image of some yeast cells, 
 and a PSF made on an OMX microscope system using oil immersion 60x / 1.42 plan apochromat lens from olympus,
-with a little extra magnification ion the tube lens, giving 80 nm image pixel spacing. 
+with a little extra magnification in the tube lens, giving 80 nm image pixel spacing. 
 Both of these images have the PCO.edge sCMOS camera offset of ~100-105 counts removed,
 since this improves results by not defeating the non-negativity constraint.
 This test data is included in the git respository alongside this script.
@@ -99,39 +99,69 @@ Description of the algorithm:
  * At each cycle, the new guess is corrected to maintain positivity and any other desired real-space constraints,
  * such as spatial boundedness. Every five cycles or so, the guess is smoothed with a Gaussian filter to ....
 
-
 */
 
 // imports first please
 importClass(Packages.ij.IJ);
-importClass(Packages.ij.plugin.Duplicator);
+importClass(Packages.ij.WindowManager);
+importClass(Packages.net.haesleinhuepf.clij2.CLIJ2)
+
+// initialise CLIJ2 for the 1st GPU it finds, by specifying no GPU explicitly
+IJ.run("CLIJ2 Macro Extensions", "cl_device=");
+Ext.CLIJ2_clear();
 
 // open the test raw image and empirical PSF image
 raw = IJ.openImage("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
-psf = IJ.openImage("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64.tif");
+psf = IJ.openImage("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
 
 // tidy up the image titles for clarity. 
 raw.setTitle("raw");
 psf.setTitle("psf");
+raw.show();
+psf.show();
 
 // make a working image copy of raw, to do the interations on: the guess image
-guess = new Duplicator().run(WindowManager.getImage("raw"));
+IJ.selectWindow("raw");
+//duplicate stack
+guess = raw.duplicate();
 guess.setTitle("guess");
 guess.show();
+//send it to the GPU
+guessGPU = "guess";
+Ext.CLIJ2_push(guessGPU);
+
+// initial smoothing operation to remove some noise from the raw image - use IJ 3D Gaussian, or CLIJ, with small sigma of 1. 
+// Do we even need that since the first step in the iteration in blur image with PSF????
+//IJ.run(guess, "Gaussian Blur 3D...", "x=1.0 y=1.0 z=1.0");
+// or in CLIJ2
+// gaussian blur
+gaussGuessGPU = "gaussGuess";
+sigma_x = 1.0;
+sigma_y = 1.0;
+sigma_z = 1.0;
+Ext.CLIJ2_gaussianBlur3D(guessGPU, gaussGuessGPU, sigma_x, sigma_y, sigma_z);
+Ext.CLIJ2_pull(gaussGuessGPU);
+// clear GPU
+//Ext.CLIJ2_clear();
 
 // set up any variables we need for iterations
-var itersAlgebraic = 2;
-var itersGemostric = 8;
-
-// initial smoothing operation to remove some noise from the raw image - use 3D Gaussian, IJ or CLIJ, small sigma. 
-IJ.run(guess, "Gaussian Blur 3D...", "x=1.5 y=1.5 z=1.5");
+var itersAlgebraic = 1;
+var itersGeometric = 0;
 
 //algebraic iterations for loop
 for (i=0; i<itersAlgebraic; i++) {
 
-//blur the current guess (raw image at the beginning) with the PSF using FD Math
-//IJ.run("FD Math...", "image1=temp operation=Convolve "
-//	+ "image2=PSFwithNoise result=tempConv do");
+//blur the current guess (raw image at the beginning) with the PSF using CLiJ custom kernel convolve.
+//FD Math works on single slices onluy, so use DeconvLab2 or CLIJ2
+//IJ.run("FD Math...", "image1=guess operation=Convolve " + "image2=psf result=blurredGuess do");
+// DeconvolutionLab2 only seems to read input data from disk? Can i pass it an open image? 
+//IJ.run("DeconvolutionLab2 Run", guess + psf + " -algorithm CONV" + "")
+// CLIJ2
+//clear
+//push images
+// perform convolution of one image with another
+// pull result blurred guess image
+
 
 // rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
 
@@ -148,10 +178,10 @@ for (i=0; i<itersAlgebraic; i++) {
 //end algebraic iterations for loop
 }
 
-//geometrix iterations for loop
-for (i=0; i<itersAlgebraic; i++) {
+//geometric iterations for loop
+for (i=0; i<itersGeometric; i++) {
 
-//blur the current guess (raw image at the beginning) with the PSF using FD Math
+//blur the current guess (raw image at the beginning) with the PSF using CLiJ custom kernel convolve. (FD Math works on single slices)
 //IJ.run("FD Math...", "image1=temp operation=Convolve "
 //	+ "image2=PSFwithNoise result=tempConv do");
 
