@@ -112,6 +112,7 @@ open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1
 rename("raw")
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
 open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64.tif");
+//open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
 rename("psf")
 
 // make a working image copy of raw on the GPU, to do the interations on: the guess image
