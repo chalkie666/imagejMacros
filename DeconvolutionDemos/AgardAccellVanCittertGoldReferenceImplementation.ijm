@@ -132,6 +132,12 @@ Ext.CLIJ2_pull(gaussGuessGPU);
 // clear GPU
 //Ext.CLIJ2_clear();
 
+// push images needed to GPU, gaussGuessGPU is already there, so need to push PSF image
+psfGPU = "psf";
+Ext.CLIJ2_push(psfGPU);
+// need to define an output image variable, same size as input guess image
+convGuessGPU = "convGuess";
+
 // set up any variables we need for iterations
 var itersAlgebraic = 1;
 var itersGeometric = 0;
@@ -139,18 +145,15 @@ var itersGeometric = 0;
 //algebraic iterations for loop
 for (i=0; i<itersAlgebraic; i++) {
 
-//blur the current guess (raw image at the beginning) with the PSF using CLiJ custom kernel convolve.
-//FD Math works on single slices onluy, so use DeconvLab2 or CLIJ2
+//blur the current guess (raw image at the beginning) with the PSF using CLIJ2 custom kernel convolve.
+//FD Math works on single slices only, so use DeconvLab2 or CLIJ2
 //IJ.run("FD Math...", "image1=guess operation=Convolve " + "image2=psf result=blurredGuess do");
 // DeconvolutionLab2 only seems to read input data from disk? Can i pass it an open image? 
 //IJ.run("DeconvolutionLab2 Run", guess + psf + " -algorithm CONV" + "")
-// CLIJ2
-//clear
-//push images
-// perform convolution of one image with another
-// pull result blurred guess image
 
-
+// CLIJ2 convolution of an image with another image (is this FFT based, or real; space? )
+Ext.CLIJ2_convolve(gaussGuessGPU, psfGPU, convGuessGPU);
+Ext.CLIJ2_pull(convGuessGPU);
 // rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
 
 //get the difference (residuals) between the rescaled blurred guess and the raw image.
