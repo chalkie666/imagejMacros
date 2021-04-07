@@ -101,7 +101,70 @@ Description of the algorithm:
 
 
 */
- 
+
+// imports first please
+importClass(Packages.ij.IJ);
+importClass(Packages.ij.plugin.Duplicator);
+
+// open the test raw image and empirical PSF image
+raw = IJ.openImage("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
+psf = IJ.openImage("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64.tif");
+
+// tidy up the image titles for clarity. 
+raw.setTitle("raw");
+psf.setTitle("psf");
+
+// make a working image copy of raw, to do the interations on: the guess image
+guess = new Duplicator().run(WindowManager.getImage("raw"));
+guess.setTitle("guess");
+guess.show();
+
+// set up any variables we need for iterations
+var itersAlgebraic = 2;
+var itersGemostric = 8;
+
+// initial smoothing operation to remove some noise from the raw image - use 3D Gaussian, IJ or CLIJ, small sigma. 
+IJ.run(guess, "Gaussian Blur 3D...", "x=1.5 y=1.5 z=1.5");
+
+//algebraic iterations for loop
+for (i=0; i<itersAlgebraic; i++) {
+
+//blur the current guess (raw image at the beginning) with the PSF using FD Math
+//IJ.run("FD Math...", "image1=temp operation=Convolve "
+//	+ "image2=PSFwithNoise result=tempConv do");
+
+// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
+
+//get the difference (residuals) between the rescaled blurred guess and the raw image.
+
+// inverse filter (regularised) the residuals - use DeconvLab2? 
+
+// update the current guess image with the inverse filtered residuals. 
+
+// apply non-negativity constraint - set all -ve pixels to 0.0
+
+// rescale the guess image again as above.
+
+//end algebraic iterations for loop
+}
+
+//geometrix iterations for loop
+for (i=0; i<itersAlgebraic; i++) {
+
+//blur the current guess (raw image at the beginning) with the PSF using FD Math
+//IJ.run("FD Math...", "image1=temp operation=Convolve "
+//	+ "image2=PSFwithNoise result=tempConv do");
+
+// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
+
+// get the ratio between the rescaled blurred guess and the raw image.
+
+// update the current guess image with the ratio. 
+
+// apply non-negativity constraint - set all -ve pixels to 0.0
+
+// rescale the guess image again as above.
+
 //end algebraic iterations for loop
 }
 
