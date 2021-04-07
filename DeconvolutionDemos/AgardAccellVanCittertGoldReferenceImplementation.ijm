@@ -101,33 +101,21 @@ Description of the algorithm:
 
 */
 
-// imports first please
-importClass(Packages.ij.IJ);
-importClass(Packages.ij.WindowManager);
-importClass(Packages.net.haesleinhuepf.clij2.CLIJ2)
-
 // initialise CLIJ2 for the 1st GPU it finds, by specifying no GPU explicitly
-IJ.run("CLIJ2 Macro Extensions", "cl_device=");
+run("CLIJ2 Macro Extensions", "cl_device=");
 Ext.CLIJ2_clear();
 
 // open the test raw image and empirical PSF image
-raw = IJ.openImage("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
-psf = IJ.openImage("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
+// tidy up the image titles for clarity.
+open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
+rename("raw")
+open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
+rename("psf")
 
-// tidy up the image titles for clarity. 
-raw.setTitle("raw");
-psf.setTitle("psf");
-raw.show();
-psf.show();
-
-// make a working image copy of raw, to do the interations on: the guess image
-IJ.selectWindow("raw");
-//duplicate stack
-guess = raw.duplicate();
-guess.setTitle("guess");
-guess.show();
+// make a working image copy of raw on the GPU, to do the interations on: the guess image
+selectWindow("raw");
 //send it to the GPU
-guessGPU = "guess";
+guessGPU = "raw";
 Ext.CLIJ2_push(guessGPU);
 
 // initial smoothing operation to remove some noise from the raw image - use IJ 3D Gaussian, or CLIJ, with small sigma of 1. 
