@@ -156,9 +156,11 @@ for (i=0; i<itersAlgebraic; i++) {
 // DeconvolutionLab2 only seems to read input data from disk? Can i pass it an open image? 
 //IJ.run("DeconvolutionLab2 Run", guess + psf + " -algorithm CONV" + "")
 
-// CLIJ2 convolution of an image with another image (is this FFT based, or real; space? )
-Ext.CLIJ2_convolve(gaussGuessGPU, psfGPU, convGuessGPU);
-Ext.CLIJ2_pull(convGuessGPU);
+// CLIJ2 convolution of an image with another image (thisd is slow, real space implememtation )
+//Ext.CLIJ2_convolve(gaussGuessGPU, psfGPU, convGuessGPU);
+// CLIJ2x experimental FFT based convolution of 2 images - should be faster
+Ext.CLIJx_convolveFFT(gaussGuessGPU, psfGPU, convGuessGPU)
+
 // rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
 
 //get the difference (residuals) between the rescaled blurred guess and the raw image.
