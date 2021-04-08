@@ -102,16 +102,19 @@ Description of the algorithm:
 */
 
 // initialise CLIJ2 for the 1st GPU it finds, by specifying no GPU explicitly
-run("CLIJ2 Macro Extensions", "cl_device=");
+// or fall back to CPU 
+//run("CLIJ2 Macro Extensions", "cl_device=");
+run("CLIJ2 Macro Extensions", "cl_device=CPU");
 Ext.CLIJ2_clear();
 
 // open the test raw image and empirical PSF image
 // tidy up the image titles for clarity.
-//open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
-open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
+open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
+//open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 rename("raw")
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
-open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64.tif");
+open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64.tif");
+//open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
 rename("psf")
 
@@ -190,6 +193,9 @@ for (i=0; i<itersGeometric; i++) {
 
 //end algebraic iterations for loop
 }
+
+//pull the last iteration result image from the GPU
+Ext.CLIJ2_pull(convGuessGPU);
 
 // clear GPU
 Ext.CLIJ2_clear();
