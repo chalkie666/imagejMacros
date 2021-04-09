@@ -190,6 +190,92 @@ for (i=0; i<itersGeometric; i++) {
 // update the current guess image with the ratio. 
 
 // apply non-negativity constraint - set all -ve pixels to 0.0
+/*
+// initial smoothing operation to remove some noise from the raw image - use IJ 3D Gaussian, or CLIJ, with small sigma of 1. 
+// Do we even need that since the first step in the iteration in blur image with PSF????
+// IJ.run(raw, "Gaussian Blur 3D...", "x=1.0 y=1.0 z=1.0");
+// or in CLIJ2-3D-gaussian blur , then define an output variable
+*/
+
+gaussGuessGPU = "gaussGuess";
+sigma_x = 1.0;
+sigma_y = 1.0;
+sigma_z = 1.0;
+Ext.CLIJ2_gaussianBlur3D(guessGPU, gaussGuessGPU, sigma_x, sigma_y, sigma_z);
+Ext.CLIJ2_pull(gaussGuessGPU);
+
+/* iterations setup
+ need to define output image variables same size as input guess image apparently by magic.
+*/
+convGuessGPU = "convGuess";
+scaledConvGuessGPU = "scaledConvGuess";
+differenceGPU = "difference";
+differenceWienerGPU = "differenceWiener";
+updatesGuessGPU = "updatedGuess";
+nonNegUpdatedGuessGPU = "nonNegUpdatedGuess"; 
+// set up any variables we need for iterations
+var itersAlgebraic = 1;
+var itersGeometric = 0;
+// find sum of raw image for use in the iteration loop
+rawSum = Ext.CLIJ2_sumOfAllPixels(rawGPU);
+print(rawSum);
+
+//algebraic iterations for loop
+for (i=0; i<itersAlgebraic; i++) {
+
+	//blur the current guess (raw image at the beginning) with the PSF using CLIJ2 custom kernel convolve.
+	//FD Math works on single slices only, so use DeconvLab2 or CLIJ2
+	//IJ.run("FD Math...", "image1=guess operation=Convolve " + "image2=psf result=blurredGuess do");
+	// DeconvolutionLab2 only seems to read input data from disk? Can i pass it an open image? 
+	//IJ.run("DeconvolutionLab2 Run", guess + psf + " -algorithm CONV" + "")
+
+	// CLIJ2 convolution of an image with another image (this is slow, real space implementation )
+	//Ext.CLIJ2_convolve(gaussGuessGPU, psfGPU, convGuessGPU);
+	// CLIJ2x experimental FFT based convolution of 2 images - should be faster
+	Ext.CLIJx_convolveFFT(gaussGuessGPU, psfGPU, convGuessGPU)
+	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
+	// find sum of current guess image
+	rawConvGuessSum = Ext.CLIJ2_sumOfAllPixels(convGuessGPU);
+	// calculate ratio of sums, and scale current guess image pixel intensities accordingly
+	scalingFactor = rawConvGuessSum / rawSum;
+	print(scalingFactor);
+	// multiply image and scalar
+	Ext.CLIJ2_multiplyImageAndScalar(convGuessGPU, scaledConvGuessGPU, scalingFactor);
+	//get the difference (residuals) between the raw image and the rescaled blurred guess
+	// subtract images
+	Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
+	// inverse filter (Wiener filter, regularised) the residuals - use Decon Lab2, or simpleITK-CLIJ2x Wiener deconv
+	// simple i t k wiener deconvolution
+	//noise_variance = 0.01;
+	//normalize = true;
+	//Ext.CLIJx_simpleITKWienerDeconvolution(image1, image2, image3, noise_variance, normalize);
+	Ext.CLIJx_simpleITKWienerDeconvolution(differenceGPU, psfGPU, differenceWienerGPU, 0.01, true);
+	// update the current guess image with the inverse filtered residuals, by addition of the two images. 
+	Ext.CLIJ2_addImages(scaledConvGuessGPU, differenceWienerGPU, nonNegUpdatedGuessGPU);
+	// apply non-negativity constraint - set all -ve pixels to 0.0
+	// use the maximumImageAnsScalar CLIJ2 gadget
+	//Ext.CLIJ2_pushArray(source, newArray(0, -1, 5), 3, 1, 1); // width=3, height=1, depth=1
+	//Ext.CLIJ2_maximumImageAndScalar(source, destination, 0);
+	//Ext.CLIJ2_print(destination);
+	// rescale the guess image again as above.
+
+//end algebraic iterations for loop
+}
+
+//geometric iterations for loop
+for (i=0; i<itersGeometric; i++) {
+
+//blur the current guess (raw image at the beginning) with the PSF using CLIJ custom kernel convolve. (FD Math works on single slices)
+//IJ.run("FD Math...", "image1=temp operation=Convolve "
+//	+ "image2=PSFwithNoise result=tempConv do");
+
+// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
+
+// get the ratio between the rescaled blurred guess and the raw image.
+
+// update the current guess image with the ratio. 
+
+// apply non-negativity constraint - set all -ve pixels to 0.0
 
 // rescale the guess image again as above.
 
@@ -197,7 +283,7 @@ for (i=0; i<itersGeometric; i++) {
 }
 
 //pull the last iteration result image from the GPU
-Ext.CLIJ2_pull(convGuessGPU);
+Ext.CLIJ2_pull(nonNegUpdatedGuessGPU);
 
 // clear GPU
 Ext.CLIJ2_clear();
