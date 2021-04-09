@@ -162,7 +162,7 @@ var itersAlgebraic = 1;
 var itersGeometric = 0;
 // find sum of raw image for use in the iteration loop
 rawSum = Ext.CLIJ2_sumOfAllPixels(rawGPU);
-print(rawSum);
+print("rawsum " + rawSum);
 
 //algebraic iterations for loop
 for (i=0; i<itersAlgebraic; i++) {
@@ -177,25 +177,31 @@ for (i=0; i<itersAlgebraic; i++) {
 	//Ext.CLIJ2_convolve(gaussGuessGPU, psfGPU, convGuessGPU);
 	// CLIJ2x experimental FFT based convolution of 2 images - should be faster
 	Ext.CLIJx_convolveFFT(gaussGuessGPU, psfGPU, convGuessGPU)
+	Ext.CLIJ2_pull(convGuessGPU);
 	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
 	// find sum of current guess image
 	rawConvGuessSum = Ext.CLIJ2_sumOfAllPixels(convGuessGPU);
+	print("rawConvGuessSum " + rawConvGuessSum);
 	// calculate ratio of sums, and scale current guess image pixel intensities accordingly
 	scalingFactor = rawConvGuessSum / rawSum;
-	print(scalingFactor);
+	print("scaling factor " + scalingFactor);
 	// multiply image and scalar
 	Ext.CLIJ2_multiplyImageAndScalar(convGuessGPU, scaledConvGuessGPU, scalingFactor);
+	Ext.CLIJ2_pull(scaledConvGuessGPU);
 	//get the difference (residuals) between the raw image and the rescaled blurred guess
 	// subtract images
 	Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
+	Ext.CLIJ2_pull(differenceGPU);
 	// inverse filter (Wiener filter, regularised) the residuals - use Decon Lab2, or simpleITK-CLIJ2x Wiener deconv
 	// simple i t k wiener deconvolution
 	//noise_variance = 0.01;
 	//normalize = true;
 	//Ext.CLIJx_simpleITKWienerDeconvolution(image1, image2, image3, noise_variance, normalize);
 	Ext.CLIJx_simpleITKWienerDeconvolution(differenceGPU, psfGPU, differenceWienerGPU, 0.01, true);
+	Ext.CLIJ2_pull(differenceWienerGPU);
 	// update the current guess image with the inverse filtered residuals, by addition of the two images. 
-	Ext.CLIJ2_addImages(scaledConvGuessGPU, differenceWienerGPU, nonNegUpdatedGuessGPU);
+	Ext.CLIJ2_addImages(scaledConvGuessGPU, differenceWienerGPU, updatesGuessGPU);
+	Ext.CLIJ2_pull(updatesGuessGPU);
 	// apply non-negativity constraint - set all -ve pixels to 0.0
 	// use the maximumImageAnsScalar CLIJ2 gadget
 	//Ext.CLIJ2_pushArray(source, newArray(0, -1, 5), 3, 1, 1); // width=3, height=1, depth=1
@@ -227,7 +233,7 @@ for (i=0; i<itersGeometric; i++) {
 }
 
 //pull the last iteration result image from the GPU
-Ext.CLIJ2_pull(nonNegUpdatedGuessGPU);
+//Ext.CLIJ2_pull(whateverthefinalimageiscalled);
 
 // clear GPU
 Ext.CLIJ2_clear();
