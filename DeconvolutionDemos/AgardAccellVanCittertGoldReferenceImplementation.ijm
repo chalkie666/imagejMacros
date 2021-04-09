@@ -108,88 +108,32 @@ run("CLIJ2 Macro Extensions", "cl_device=CPU");
 Ext.CLIJ2_clear();
 
 // open the test raw image and empirical PSF image
-// tidy up the image titles for clarity.
+// convert to 32 bit float, as -ve values will happen later, and tidy up the image titles for clarity.
 open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
+run("32-bit");
 rename("raw")
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
 open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105.tif");
+run("32-bit");
 rename("psf")
 
-// make a working image copy of raw on the GPU, to do the interations on: the guess image
 selectWindow("raw");
-//send it to the GPU
-guessGPU = "raw";
-Ext.CLIJ2_push(guessGPU);
 
-// initial smoothing operation to remove some noise from the raw image - use IJ 3D Gaussian, or CLIJ, with small sigma of 1. 
-// Do we even need that since the first step in the iteration in blur image with PSF????
-//IJ.run(guess, "Gaussian Blur 3D...", "x=1.0 y=1.0 z=1.0");
-// or in CLIJ2
-// gaussian blur
-gaussGuessGPU = "gaussGuess";
-sigma_x = 1.0;
-sigma_y = 1.0;
-sigma_z = 1.0;
-Ext.CLIJ2_gaussianBlur3D(guessGPU, gaussGuessGPU, sigma_x, sigma_y, sigma_z);
-Ext.CLIJ2_pull(gaussGuessGPU);
-
-
-// push images needed to GPU, gaussGuessGPU is already there, so need to push PSF image
+// send raw image to GPU, and make a working image copy of raw, called "guess" on the GPU, to do the interations on.
+//send raw to the GPU, and also the psf
+rawGPU = "raw";
+Ext.CLIJ2_push(rawGPU);
 psfGPU = "psf";
 Ext.CLIJ2_push(psfGPU);
-// need to define an output image variable, same size as input guess image
-convGuessGPU = "convGuess";
+// make a copy of rawGPU called guessGPU
+guessGPU = "guess";
+Ext.CLIJ_copy(rawGPU, guessGPU);
+//guessGPU = "raw"
+//Ext.CLIJ2_push(guessGPU)
 
-// set up any variables we need for iterations
-var itersAlgebraic = 1;
-var itersGeometric = 0;
-
-//algebraic iterations for loop
-for (i=0; i<itersAlgebraic; i++) {
-
-//blur the current guess (raw image at the beginning) with the PSF using CLIJ2 custom kernel convolve.
-//FD Math works on single slices only, so use DeconvLab2 or CLIJ2
-//IJ.run("FD Math...", "image1=guess operation=Convolve " + "image2=psf result=blurredGuess do");
-// DeconvolutionLab2 only seems to read input data from disk? Can i pass it an open image? 
-//IJ.run("DeconvolutionLab2 Run", guess + psf + " -algorithm CONV" + "")
-
-// CLIJ2 convolution of an image with another image (thisd is slow, real space implememtation )
-//Ext.CLIJ2_convolve(gaussGuessGPU, psfGPU, convGuessGPU);
-// CLIJ2x experimental FFT based convolution of 2 images - should be faster
-Ext.CLIJx_convolveFFT(gaussGuessGPU, psfGPU, convGuessGPU)
-
-// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
-
-//get the difference (residuals) between the rescaled blurred guess and the raw image.
-
-// inverse filter (regularised) the residuals - use DeconvLab2? 
-
-// update the current guess image with the inverse filtered residuals. 
-
-// apply non-negativity constraint - set all -ve pixels to 0.0
-
-// rescale the guess image again as above.
-
-//end algebraic iterations for loop
-}
-
-//geometric iterations for loop
-for (i=0; i<itersGeometric; i++) {
-
-//blur the current guess (raw image at the beginning) with the PSF using CLiJ custom kernel convolve. (FD Math works on single slices)
-//IJ.run("FD Math...", "image1=temp operation=Convolve "
-//	+ "image2=PSFwithNoise result=tempConv do");
-
-// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
-
-// get the ratio between the rescaled blurred guess and the raw image.
-
-// update the current guess image with the ratio. 
-
-// apply non-negativity constraint - set all -ve pixels to 0.0
 /*
 // initial smoothing operation to remove some noise from the raw image - use IJ 3D Gaussian, or CLIJ, with small sigma of 1. 
 // Do we even need that since the first step in the iteration in blur image with PSF????
