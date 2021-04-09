@@ -138,7 +138,8 @@ Ext.CLIJ_copy(rawGPU, guessGPU);
 // initial smoothing operation to remove some noise from the raw image - use IJ 3D Gaussian, or CLIJ, with small sigma of 1. 
 // Do we even need that since the first step in the iteration in blur image with PSF????
 // IJ.run(raw, "Gaussian Blur 3D...", "x=1.0 y=1.0 z=1.0");
-// or in CLIJ2-3D-gaussian blur , then define an output variable
+// or in CLIJ2
+-3D-gaussian blur , then define an output variable
 */
 
 gaussGuessGPU = "gaussGuess";
@@ -149,20 +150,23 @@ Ext.CLIJ2_gaussianBlur3D(guessGPU, gaussGuessGPU, sigma_x, sigma_y, sigma_z);
 Ext.CLIJ2_pull(gaussGuessGPU);
 
 /* iterations setup
- need to define output image variables same size as input guess image apparently by magic.
+ need to define output image variables same size as input guess image
+ apparently by magic.
 */
 convGuessGPU = "convGuess";
 scaledConvGuessGPU = "scaledConvGuess";
 differenceGPU = "difference";
 differenceWienerGPU = "differenceWiener";
-updatesGuessGPU = "updatedGuess";
+updatedGuessGPU = "updatedGuess";
 nonNegUpdatedGuessGPU = "nonNegUpdatedGuess"; 
 // set up any variables we need for iterations
 var itersAlgebraic = 1;
 var itersGeometric = 0;
-// find sum of raw image for use in the iteration loop
-rawSum = Ext.CLIJ2_sumOfAllPixels(rawGPU);
-print("rawsum " + rawSum);
+// get sum of raw image for use in the iteration loop
+Ext.CLIJ2_sumOfAllPixels(rawGPU);
+// get result from results window where it lands
+rawSum = getResult("Sum", nResults() - 1);
+print("rawSum " + rawSum);
 
 //algebraic iterations for loop
 for (i=0; i<itersAlgebraic; i++) {
@@ -180,10 +184,11 @@ for (i=0; i<itersAlgebraic; i++) {
 	Ext.CLIJ2_pull(convGuessGPU);
 	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
 	// find sum of current guess image
-	rawConvGuessSum = Ext.CLIJ2_sumOfAllPixels(convGuessGPU);
-	print("rawConvGuessSum " + rawConvGuessSum);
+	Ext.CLIJ2_sumOfAllPixels(convGuessGPU);
+	convGuessSum = getResult("Sum", nResults() - 1);
+print("convGuessSum " + convGuessSum);
 	// calculate ratio of sums, and scale current guess image pixel intensities accordingly
-	scalingFactor = rawConvGuessSum / rawSum;
+	scalingFactor = convGuessSum / rawSum;
 	print("scaling factor " + scalingFactor);
 	// multiply image and scalar
 	Ext.CLIJ2_multiplyImageAndScalar(convGuessGPU, scaledConvGuessGPU, scalingFactor);
@@ -200,13 +205,14 @@ for (i=0; i<itersAlgebraic; i++) {
 	Ext.CLIJx_simpleITKWienerDeconvolution(differenceGPU, psfGPU, differenceWienerGPU, 0.01, true);
 	Ext.CLIJ2_pull(differenceWienerGPU);
 	// update the current guess image with the inverse filtered residuals, by addition of the two images. 
-	Ext.CLIJ2_addImages(scaledConvGuessGPU, differenceWienerGPU, updatesGuessGPU);
-	Ext.CLIJ2_pull(updatesGuessGPU);
-	// apply non-negativity constraint - set all -ve pixels to 0.0
-	// use the maximumImageAnsScalar CLIJ2 gadget
+	Ext.CLIJ2_addImages(scaledConvGuessGPU, differenceWienerGPU, updatedGuessGPU);
+	Ext.CLIJ2_pull(updatedGuessGPU);
+	// apply non-negativity constraint - set all -ve pixels to 0.0	
+// use the maximumImageAnsScalar CLIJ2 gadget
 	//Ext.CLIJ2_pushArray(source, newArray(0, -1, 5), 3, 1, 1); // width=3, height=1, depth=1
 	//Ext.CLIJ2_maximumImageAndScalar(source, destination, 0);
 	//Ext.CLIJ2_print(destination);
+Ext.CLIJ2_maximumImageAndScalar(updatedGuessGPU, nonNegUpdatedGuessGPU, 0.0);
 	// rescale the guess image again as above.
 
 //end algebraic iterations for loop
@@ -232,8 +238,8 @@ for (i=0; i<itersGeometric; i++) {
 //end algebraic iterations for loop
 }
 
-//pull the last iteration result image from the GPU
-//Ext.CLIJ2_pull(whateverthefinalimageiscalled);
+//pull the last iteration result image
+Ext.CLIJ2_pull(nonNegUpdatedGuessGPU);
 
 // clear GPU
 Ext.CLIJ2_clear();
