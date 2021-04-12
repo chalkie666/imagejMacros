@@ -165,7 +165,7 @@ updatedGuessGPU = "updatedGuess";
 nonNegUpdatedGuessGPU = "nonNegUpdatedGuess";
 
 // set up any variables we need for iterations
-var itersAlgebraic = 3;
+var itersAlgebraic = 2;
 var itersGeometric = 0;
 // get sum of raw image for use in the iteration loop
 Ext.CLIJ2_sumOfAllPixels(rawGPU);
@@ -207,7 +207,6 @@ for (i=0; i<itersAlgebraic; i++) {
 
 	//get the difference (residuals) between the raw image and the (rescaled) blurred guess
 	// subtract images
-	//Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
 	Ext.CLIJ2_subtractImages(rawGPU, convGuessGPU, differenceGPU);
 	Ext.CLIJ2_pull(differenceGPU);
 
@@ -241,16 +240,16 @@ for (i=0; i<itersAlgebraic; i++) {
 	//Ext.CLIJ2_pull(scaledDifferenceWienerGPU);
 */
 	// for 1st iteration, update the current guess image with the inverse filtered residuals, by addition of the two images. 
-		Ext.CLIJ2_addImages(convGuessGPU, differenceWienerGPU, updatedGuessGPU);
+		Ext.CLIJ2_addImages(guessGPU, differenceWienerGPU, updatedGuessGPU);
 	//Ext.CLIJ2_subtractImages(convGuessGPU, differenceWienerGPU, updatedGuessGPU);
 	//Ext.CLIJ2_addImages(convGuessGPU, scaledDifferenceWienerGPU, updatedGuessGPU);
 	}
 	// for subsequent interations update the guess with the diifference 
 	else {
-		Ext.CLIJ2_addImages(convGuessGPU, differenceGPU, updatedGuessGPU);
+		Ext.CLIJ2_addImages(guessGPU, differenceGPU, updatedGuessGPU);
 	}
 
-	Ext.CLIJ2_pull(updatedGuessGPU);
+	//Ext.CLIJ2_pull(updatedGuessGPU);
 
 	// apply non-negativity constraint - set all -ve pixels to 0.0	
 		// use the maximumImageAnsScalar CLIJ2 gadget
@@ -261,7 +260,7 @@ for (i=0; i<itersAlgebraic; i++) {
 	
 	// TODO: Rescale is happening another time here (or not, see above), so better make it a function? 
 	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
-	// find sum of current guess image
+	// find sum of nonNegUpdatedGuessGPU image
 	Ext.CLIJ2_sumOfAllPixels(nonNegUpdatedGuessGPU);
 	nonNegUpdatedGuessSum = getResult("Sum", nResults() - 1);
 	print(i + " nonNegUpdatedGuessSum " + nonNegUpdatedGuessSum);
@@ -270,7 +269,7 @@ for (i=0; i<itersAlgebraic; i++) {
 	print(i + " scaling factor" + scalingFactor);
 	// multiply image and scalar
 	Ext.CLIJ2_multiplyImageAndScalar(nonNegUpdatedGuessGPU, guessGPU, scalingFactor);
-	//Ext.CLIJ2_pull(guessGPU);
+	Ext.CLIJ2_pull(guessGPU);
 
 //end algebraic iterations for loop
 }
