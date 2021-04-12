@@ -135,30 +135,31 @@ Ext.CLIJ_copy(rawGPU, guessGPU);
 //Ext.CLIJ2_push(guessGPU)
 
 /*
-// initial smoothing operation to remove some noise from the raw image - use IJ 3D Gaussian, or CLIJ, with small sigma of 1. 
+// initial smoothing operation to remove some noise from the raw image - use IJ 3D Gaussian, or CLIJ, with small sigma of 1 or 0.5. 
 // Do we even need that since the first step in the iteration in blur image with PSF????
 // IJ.run(raw, "Gaussian Blur 3D...", "x=1.0 y=1.0 z=1.0");
-// or in CLIJ2
--3D-gaussian blur , then define an output variable
-*/
+// or in CLIJ2-3D-gaussian blur , so define an output variable. Output doesnt need to be rescaled, sum intensity preserved. 
+*/
 
-gaussGuessGPU = "gaussGuess";
-sigma_x = 1.0;
-sigma_y = 1.0;
-sigma_z = 1.0;
-Ext.CLIJ2_gaussianBlur3D(guessGPU, gaussGuessGPU, sigma_x, sigma_y, sigma_z);
-Ext.CLIJ2_pull(gaussGuessGPU);
+scaledNonNegUpdatedGuessGPU = "scaledNonNegUpdatedGuess";
+sigma_x = 0.5;
+sigma_y = 0.5;
+sigma_z = 0.5;
+Ext.CLIJ2_gaussianBlur3D(guessGPU, scaledNonNegUpdatedGuessGPU, sigma_x, sigma_y, sigma_z);
+Ext.CLIJ2_pull(scaledNonNegUpdatedGuessGPU);
 
 /* iterations setup
  need to define output image variables same size as input guess image
  apparently by magic.
 */
 convGuessGPU = "convGuess";
-scaledConvGuessGPU = "scaledConvGuess";
+//scaledConvGuessGPU = "scaledConvGuess";
 differenceGPU = "difference";
 differenceWienerGPU = "differenceWiener";
+scaledDifferenceWienerGPU = "scaledDifferenceWienerGPU";
 updatedGuessGPU = "updatedGuess";
-nonNegUpdatedGuessGPU = "nonNegUpdatedGuess"; 
+nonNegUpdatedGuessGPU = "nonNegUpdatedGuess";
+
 // set up any variables we need for iterations
 var itersAlgebraic = 1;
 var itersGeometric = 0;
@@ -180,40 +181,77 @@ for (i=0; i<itersAlgebraic; i++) {
 	// CLIJ2 convolution of an image with another image (this is slow, real space implementation )
 	//Ext.CLIJ2_convolve(gaussGuessGPU, psfGPU, convGuessGPU);
 	// CLIJ2x experimental FFT based convolution of 2 images - should be faster
-	Ext.CLIJx_convolveFFT(gaussGuessGPU, psfGPU, convGuessGPU)
+	//Output doesnt need to be rescaled apparently, kernel must be normalised to sum=1, seeems sum intensity is preserved.
+	Ext.CLIJx_convolveFFT(scaledNonNegUpdatedGuessGPU, psfGPU, convGuessGPU)
 	Ext.CLIJ2_pull(convGuessGPU);
+
 	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
-	// find sum of current guess image
-	Ext.CLIJ2_sumOfAllPixels(convGuessGPU);
-	convGuessSum = getResult("Sum", nResults() - 1);
-print("convGuessSum " + convGuessSum);
+	// probably not nee3ded here as CLIJx_convolveFFT seems to preserve sum image intenity ;-)
+	//find sum of current guess image
+	//Ext.CLIJ2_sumOfAllPixels(convGuessGPU);
+	//convGuessSum = getResult("Sum", nResults() - 1);
+	//print("convGuessSum " + convGuessSum);
 	// calculate ratio of sums, and scale current guess image pixel intensities accordingly
-	scalingFactor = convGuessSum / rawSum;
-	print("scaling factor " + scalingFactor);
+	//scalingFactor = rawSum / convGuessSum;
+	//print("scaling factor " + scalingFactor);
 	// multiply image and scalar
-	Ext.CLIJ2_multiplyImageAndScalar(convGuessGPU, scaledConvGuessGPU, scalingFactor);
-	Ext.CLIJ2_pull(scaledConvGuessGPU);
-	//get the difference (residuals) between the raw image and the rescaled blurred guess
+	//Ext.CLIJ2_multiplyImageAndScalar(convGuessGPU, scaledConvGuessGPU, scalingFactor);
+	//Ext.CLIJ2_pull(scaledConvGuessGPU);
+
+	//get the difference (residuals) between the raw image and the (rescaled) blurred guess
 	// subtract images
-	Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
+	//Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
+	Ext.CLIJ2_subtractImages(rawGPU, convGuessGPU, differenceGPU);
 	Ext.CLIJ2_pull(differenceGPU);
+
 	// inverse filter (Wiener filter, regularised) the residuals - use Decon Lab2, or simpleITK-CLIJ2x Wiener deconv
 	// simple i t k wiener deconvolution
 	//noise_variance = 0.01;
-	//normalize = true;
+	//normalize = true; // what si being normalised? The image result is not same sum intensity as the input? 
 	//Ext.CLIJx_simpleITKWienerDeconvolution(image1, image2, image3, noise_variance, normalize);
 	Ext.CLIJx_simpleITKWienerDeconvolution(differenceGPU, psfGPU, differenceWienerGPU, 0.01, true);
-	Ext.CLIJ2_pull(differenceWienerGPU);
+	//Ext.CLIJ2_pull(differenceWienerGPU);
+	// rescale the wiener Filtered difference image to same sum intenisty as difference image.
+	// TODO: but there are negative and positives in the difference images, so whats the right way to scale them?
+	//Cant use sum? need absolute sum? modulus
+	// find sum of current difference images
+	Ext.CLIJ2_sumOfAllPixels(differenceGPU);
+	differenceSum = getResult("Sum", nResults() - 1);
+	Ext.CLIJ2_sumOfAllPixels(differenceWienerGPU);
+	differenceWienerSum = getResult("Sum", nResults() - 1);
+	print("differenceSum " + differenceSum);
+	print("differenceWienerSum " + differenceWienerSum);
+	// calculate ratio of sums, and scale current guess image pixel intensities accordingly
+	scalingFactor = differenceSum / differenceWienerSum;
+	print("difference image scaling factor" + scalingFactor);
+	// multiply image and scalar
+	Ext.CLIJ2_multiplyImageAndScalar(differenceWienerGPU, scaledDifferenceWienerGPU, scalingFactor);
+	Ext.CLIJ2_pull(scaledDifferenceWienerGPU);
+	
 	// update the current guess image with the inverse filtered residuals, by addition of the two images. 
-	Ext.CLIJ2_addImages(scaledConvGuessGPU, differenceWienerGPU, updatedGuessGPU);
+	//Ext.CLIJ2_addImages(scaledConvGuessGPU, differenceWienerGPU, updatedGuessGPU);
+	Ext.CLIJ2_addImages(convGuessGPU, scaledDifferenceWienerGPU, updatedGuessGPU);
 	Ext.CLIJ2_pull(updatedGuessGPU);
+
 	// apply non-negativity constraint - set all -ve pixels to 0.0	
-// use the maximumImageAnsScalar CLIJ2 gadget
+		// use the maximumImageAnsScalar CLIJ2 gadget
 	//Ext.CLIJ2_pushArray(source, newArray(0, -1, 5), 3, 1, 1); // width=3, height=1, depth=1
 	//Ext.CLIJ2_maximumImageAndScalar(source, destination, 0);
 	//Ext.CLIJ2_print(destination);
-Ext.CLIJ2_maximumImageAndScalar(updatedGuessGPU, nonNegUpdatedGuessGPU, 0.0);
-	// rescale the guess image again as above.
+	Ext.CLIJ2_maximumImageAndScalar(updatedGuessGPU, nonNegUpdatedGuessGPU, 0.000000000000000000000000000);
+	
+	// TODO: Rescale is happening another time here (or not, see above), so better make it a function? 
+	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
+	// find sum of current guess image
+	Ext.CLIJ2_sumOfAllPixels(nonNegUpdatedGuessGPU);
+	nonNegUpdatedGuessSum = getResult("Sum", nResults() - 1);
+	print("nonNegUpdatedGuessSum " + nonNegUpdatedGuessSum);
+	// calculate ratio of sums, and scale current guess image pixel intensities accordingly
+	scalingFactor = rawSum / nonNegUpdatedGuessSum;
+	print("scaling factor" + scalingFactor);
+	// multiply image and scalar
+	Ext.CLIJ2_multiplyImageAndScalar(nonNegUpdatedGuessGPU, scaledNonNegUpdatedGuessGPU, scalingFactor);
+	//Ext.CLIJ2_pull(scaledConvGuessGPU);
 
 //end algebraic iterations for loop
 }
@@ -239,7 +277,7 @@ for (i=0; i<itersGeometric; i++) {
 }
 
 //pull the last iteration result image
-Ext.CLIJ2_pull(nonNegUpdatedGuessGPU);
+Ext.CLIJ2_pull(scaledNonNegUpdatedGuessGPU);
 
 // clear GPU
 Ext.CLIJ2_clear();
