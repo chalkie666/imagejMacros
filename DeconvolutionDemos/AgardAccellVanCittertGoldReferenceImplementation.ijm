@@ -185,7 +185,10 @@ for (i=0; i<itersAlgebraic; i++) {
 	// CLIJ2 convolution of an image with another image (this is slow, real space implementation )
 	//Ext.CLIJ2_convolve(gaussGuessGPU, psfGPU, convGuessGPU);
 	// CLIJ2x experimental FFT based convolution of 2 images - should be faster
-	//Output doesnt need to be rescaled apparently, kernel must be normalised to sum=1, seeems sum intensity is preserved.
+	//Output might need to be rescaled if sum intensity is not preserved
+	// TODO: This isnt working , possibly because the input image sizes arent matching or something. 
+	// testing shows it works for 64x64xn and 64x64xn image pair, but by data is 256x256 for the raw iamge
+	// 64x64 or 256x256.
 	Ext.CLIJx_convolveFFT(guessGPU, psfGPU, convGuessGPU)
 	Ext.CLIJ2_pull(convGuessGPU);
 
