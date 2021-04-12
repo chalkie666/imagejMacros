@@ -114,8 +114,8 @@ open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-Ye
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 run("32-bit");
 rename("raw")
-//open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
-open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
+open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
+//open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
 run("32-bit");
@@ -165,7 +165,7 @@ updatedGuessGPU = "updatedGuess";
 nonNegUpdatedGuessGPU = "nonNegUpdatedGuess";
 
 // set up any variables we need for iterations
-var itersAlgebraic = 2;
+var itersAlgebraic = 1;
 var itersGeometric = 0;
 // get sum of raw image for use in the iteration loop
 Ext.CLIJ2_sumOfAllPixels(rawGPU);
