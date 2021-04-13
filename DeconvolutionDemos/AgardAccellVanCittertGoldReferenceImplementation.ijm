@@ -110,15 +110,16 @@ Ext.CLIJ2_clear();
 
 // open the test raw image and empirical PSF image
 // convert to 32 bit float, as -ve values will happen later, and tidy up the image titles for clarity.
-open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
+open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_64xcropSub100_zcrop21.tif");
+//open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
-run("32-bit");
+//run("32-bit"); // CLIJ2 FFT convolve converts to 32 bit, we dont need to here. 
 rename("raw")
 open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
-run("32-bit");
+//run("32-bit");
 rename("psf")
 
 selectWindow("raw");
@@ -157,7 +158,7 @@ Ext.CLIJ2_pull(guessGPU);
  apparently by magic.
 */
 convGuessGPU = "convGuess";
-//scaledConvGuessGPU = "scaledConvGuess";
+scaledConvGuessGPU = "scaledConvGuess";
 differenceGPU = "difference";
 differenceWienerGPU = "differenceWiener";
 //scaledDifferenceWienerGPU = "scaledDifferenceWienerGPU";
@@ -186,28 +187,28 @@ for (i=0; i<itersAlgebraic; i++) {
 	//Ext.CLIJ2_convolve(gaussGuessGPU, psfGPU, convGuessGPU);
 	// CLIJ2x experimental FFT based convolution of 2 images - should be faster
 	//Output might need to be rescaled if sum intensity is not preserved
-	// TODO: This isnt working , possibly because the input image sizes arent matching or something. 
-	// testing shows it works for 64x64xn and 64x64xn image pair, but by data is 256x256 for the raw iamge
-	// 64x64 or 256x256.
+	// TODO: This only works when raw image is eg 64x64x21 and psf is larger in xy (256) and same in z (21). 
+	// but raw data is normally a bigger image than the PSF image... is it a bug?
+	//
 	Ext.CLIJx_convolveFFT(guessGPU, psfGPU, convGuessGPU)
 	Ext.CLIJ2_pull(convGuessGPU);
 
 	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
-	// probably not nee3ded here as CLIJx_convolveFFT seems to preserve sum image intenity ;-)
+	// 
 	//find sum of current guess image
-	//Ext.CLIJ2_sumOfAllPixels(convGuessGPU);
-	//convGuessSum = getResult("Sum", nResults() - 1);
-	//print("convGuessSum " + convGuessSum);
-	// calculate ratio of sums, and scale current guess image pixel intensities accordingly
-	//scalingFactor = rawSum / convGuessSum;
-	//print("scaling factor " + scalingFactor);
-	// multiply image and scalar
-	//Ext.CLIJ2_multiplyImageAndScalar(convGuessGPU, scaledConvGuessGPU, scalingFactor);
-	//Ext.CLIJ2_pull(scaledConvGuessGPU);
+	Ext.CLIJ2_sumOfAllPixels(convGuessGPU);
+	convGuessSum = getResult("Sum", nResults() - 1);
+	print("convGuessSum " + convGuessSum);
+	//calculate ratio of sums, and scale current guess image pixel intensities accordingly
+	scalingFactor = rawSum / convGuessSum;
+	print("scaling factor " + scalingFactor);
+	//multiply image and scalar
+	Ext.CLIJ2_multiplyImageAndScalar(convGuessGPU, scaledConvGuessGPU, scalingFactor);
+	Ext.CLIJ2_pull(scaledConvGuessGPU);
 
 	//get the difference (residuals) between the raw image and the (rescaled) blurred guess
 	// subtract images
-	Ext.CLIJ2_subtractImages(rawGPU, convGuessGPU, differenceGPU);
+	Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
 	Ext.CLIJ2_pull(differenceGPU);
 
 	if (i==0) {
