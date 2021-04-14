@@ -113,13 +113,15 @@ Ext.CLIJ2_clear();
 open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_128xcropSub100_zcrop21.tif");
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
-//run("32-bit"); // CLIJ2 FFT convolve converts to 32 bit, we dont need to here. 
+// CLIJ2 FFT convolve converts to 32 bit, but when we pull images from gpu it converts back to source type
+// and thats a bad idea for small factional number resutls eg in ratio calculations, as we get rounding errors 
+run("32-bit"); 
 rename("raw")
 open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
-//run("32-bit");
+run("32-bit");
 rename("psf")
 
 selectWindow("raw");
@@ -147,7 +149,7 @@ Ext.CLIJ2_push(guessGPU)
 */
 
 guessGPU = "guess";
-sigma = 0.75;
+sigma = 1.0;
 sigma_x = sigma;
 sigma_y = sigma;
 sigma_z = sigma;
@@ -168,8 +170,22 @@ nonNegUpdatedGuessGPU = "nonNegUpdatedGuess";
 guessSmoothGPU = "guessSmooth"
 
 // set up any variables we need for iterations
-var itersAlgebraic = 10;
-var itersGeometric = 0;
+
+// This algorithm has 4 variants, names in the black box implememtation as
+// Additive or Ratio methods (of iteration update), 
+// each with 1st iteration Wiener filtering of difference iamge accelleration,  or not,
+// referred to in the black box software as "Enhanced" 
+// In the book chapter, Additive is called algebraic, and Ratio is called geometric
+// choose 1 of "EnhancedAdditive" or "EnhancedRatio", 
+// TODO "Ratio" or "Additive" without Wiener filter step not implemented yet. 
+// Note that both enhanced methods use Additive iteration for the first step
+// containing the Wiener filtered difference image. EnhancedRatio then switches to ratio updates
+//default is "EnhancedRatio" as per the black box implementation 
+algorithmType = "EnhancedRatio";
+// only multiples of 5 iterations make sense because result is smoothed very 5 iterations. 
+itersMultiplesOfFive = 2;
+itersAdditive = itersMultiplesOfFive*5;
+
 // get sum of raw image for use in the iteration loop
 Ext.CLIJ2_sumOfAllPixels(rawGPU);
 // get result from results window where it lands
@@ -177,7 +193,7 @@ rawSum = getResult("Sum", nResults() - 1);
 print("rawSum " + rawSum);
 
 //algebraic iterations for loop
-for (i=0; i<itersAlgebraic; i++) {
+for (i=0; i<itersAdditive; i++) {
 
 	//blur the current guess (raw image at the beginning) with the PSF using CLIJ2 custom kernel convolve.
 	//FD Math works on single slices only, so use DeconvLab2 or CLIJ2
@@ -208,51 +224,81 @@ for (i=0; i<itersAlgebraic; i++) {
 	Ext.CLIJ2_multiplyImageAndScalar(convGuessGPU, scaledConvGuessGPU, scalingFactor);
 	Ext.CLIJ2_pull(scaledConvGuessGPU);
 
-	//get the difference (residuals) between the raw image and the (rescaled) blurred guess
-	// subtract images
-	Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
-	Ext.CLIJ2_pull(differenceGPU);
-
-	if (i==0) {
+	//For the 1st iterations of EnhancedAdditive and EnhancedRatio,
+	// do a Van Cittert, additive update with Wiener filtered difference. book p81, 295 	
+	// get the difference (residuals) between the raw image and the (rescaled) blurred guess
+	// Wiener filer the difference, then add that to the guess. 
+	if ((i==0) && ((algorithmType == "EnhancedAdditive") || (algorithmType == "EnhancedRatio"))) {
+		// subtract images
+		Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
+		//Ext.CLIJ2_pull(differenceGPU);
 /*
-	// inverse filter (Wiener filter, regularised) the residuals - use Decon Lab2, or simpleITK-CLIJ2x Wiener deconv
-	// simple i t k wiener deconvolution
-	//noise_variance = 0.01;
-	//normalize = true; // what is being normalised? The image result is not same sum intensity as the input? 
-	//Ext.CLIJx_simpleITKWienerDeconvolution(image1, image2, image3, noise_variance, normalize);
+		// inverse filter (Wiener filter, regularised) the residuals - use Decon Lab2, or simpleITK-CLIJ2x Wiener deconv
+		// simple i t k wiener deconvolution
+		//noise_variance = 0.01;
+		//normalize = true; // what is being normalised? The image result is not same sum intensity as the input? 
+		//Ext.CLIJx_simpleITKWienerDeconvolution(image1, image2, image3, noise_variance, normalize);
 */
 		Ext.CLIJx_simpleITKWienerDeconvolution(differenceGPU, psfGPU, differenceWienerGPU, 0.0, true);
 		Ext.CLIJ2_pull(differenceWienerGPU);
-	
 /*
-	// rescale (or mayne not?)  the Wiener Filtered difference image to same sum intenisty as difference image.
-	// TODO: but there are negative and positives in the difference images, so whats the right way to scale them?
-	// Cant use sum? need absolute sum? modulus? Do we even need to rescsale ?
-	// find sum of current difference images
-	//Ext.CLIJ2_sumOfAllPixels(differenceGPU);
-	//differenceSum = getResult("Sum", nResults() - 1);
-	//Ext.CLIJ2_sumOfAllPixels(differenceWienerGPU);
-	//differenceWienerSum = getResult("Sum", nResults() - 1);
-	//print("differenceSum " + differenceSum);
-	//print("differenceWienerSum " + differenceWienerSum);
-	// calculate ratio of sums, and scale current guess image pixel intensities accordingly
-	//scalingFactor = differenceSum / differenceWienerSum;
-	//print("difference image scaling factor" + scalingFactor);
-	// multiply image and scalar
-	//Ext.CLIJ2_multiplyImageAndScalar(differenceWienerGPU, scaledDifferenceWienerGPU, scalingFactor);
-	//Ext.CLIJ2_pull(scaledDifferenceWienerGPU);
+		// rescale (or mayne not?)  the Wiener Filtered difference image to same sum intenisty as difference image.
+		// TODO: but there are negative and positives in the difference images, so whats the right way to scale them?
+		// Cant use sum? need absolute sum? modulus? Do we even need to rescsale ?
+		// find sum of current difference images
+		//Ext.CLIJ2_sumOfAllPixels(differenceGPU);
+		//differenceSum = getResult("Sum", nResults() - 1);
+		//Ext.CLIJ2_sumOfAllPixels(differenceWienerGPU);
+		//differenceWienerSum = getResult("Sum", nResults() - 1);
+		//print("differenceSum " + differenceSum);
+		//print("differenceWienerSum " + differenceWienerSum);
+		// calculate ratio of sums, and scale current guess image pixel intensities accordingly
+		//scalingFactor = differenceSum / differenceWienerSum;
+		//print("difference image scaling factor" + scalingFactor);
+		// multiply image and scalar
+		//Ext.CLIJ2_multiplyImageAndScalar(differenceWienerGPU, scaledDifferenceWienerGPU, scalingFactor);
+		//Ext.CLIJ2_pull(scaledDifferenceWienerGPU);
 */
-	// for 1st iteration, update the current guess image with the inverse filtered residuals, by addition of the two images. 
+		// for 1st "EnhancedAdditive", EnhancedRatio" and "additive" iteration, 
+		// update the current guess image with the inverse filtered residuals, by addition of the two images. 
 		Ext.CLIJ2_addImages(guessGPU, differenceWienerGPU, updatedGuessGPU);
-	//Ext.CLIJ2_subtractImages(convGuessGPU, differenceWienerGPU, updatedGuessGPU);
-	//Ext.CLIJ2_addImages(convGuessGPU, scaledDifferenceWienerGPU, updatedGuessGPU);
+		//Ext.CLIJ2_subtractImages(convGuessGPU, differenceWienerGPU, updatedGuessGPU);
+		//Ext.CLIJ2_addImages(convGuessGPU, scaledDifferenceWienerGPU, updatedGuessGPU);
 	}
-	// for subsequent interations update the guess with the diifference 
-	else {
+
+	// For 1st "Additive" iteration update the guess 
+	// with the difference: a Van Cittert upadte, book p81, 295 
+	if ((i==0) && (algorithmType == "Additive")) {
+		// subtract images
+		Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
+		Ext.CLIJ2_pull(differenceGPU);
+		// add difference to guess
+		Ext.CLIJ2_addImages(guessGPU, differenceGPU, updatedGuessGPU);
+
+	}
+	
+	// for non first "Additive" and "EnhancedAdditive" interations update the guess 
+	// with the difference: a Van Cittert upadte, book p81, 295 
+	if ((i!=0) && ((algorithmType == "EnhancedAdditive") || (algorithmType == "Additive"))) {
+		// subtract images
+		Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU);
+		Ext.CLIJ2_pull(differenceGPU);
+		// add difference to guess
 		Ext.CLIJ2_addImages(guessGPU, differenceGPU, updatedGuessGPU);
 	}
 
-	//Ext.CLIJ2_pull(updatedGuessGPU);
+	// For non first "EnhancedRatio" and "Ratio" iterations
+	// we will use unmodified Gold's ratio update, book page 115
+	// newGuess = guess * (raw / PSFblurredGuess)
+	// (TODO: The modified Gold's ratio method on page 116 ensured convergence and non negativity, 
+	// using a similar multiplication by flipped OTF that the RL iteration uses) 
+	if ((i!=0) && ((algorithmType == "EnhancedRatio") || (algorithmType == "Ratio"))) {
+		Ext.CLIJ2_divideImages(rawGPU, scaledConvGuessGPU, differenceGPU);
+		Ext.CLIJ2_multiplyImages(guessGPU, differenceGPU, updatedGuessGPU);
+	}
+
+	Ext.CLIJ2_pull(differenceGPU);
+	Ext.CLIJ2_pull(updatedGuessGPU);
 
 	// apply non-negativity constraint - set all -ve pixels to 0.0	
 		// use the maximumImageAnsScalar CLIJ2 gadget
@@ -280,26 +326,6 @@ for (i=0; i<itersAlgebraic; i++) {
 		Ext.CLIJ2_pull(guessSmoothGPU);
 		Ext.CLIJ_copy(guessSmoothGPU, guessGPU);
 	}
-
-//end algebraic iterations for loop
-}
-
-//geometric iterations for loop
-for (i=0; i<itersGeometric; i++) {
-
-//blur the current guess (raw image at the beginning) with the PSF using CLIJ custom kernel convolve. (FD Math works on single slices)
-//IJ.run("FD Math...", "image1=temp operation=Convolve "
-//	+ "image2=PSFwithNoise result=tempConv do");
-
-// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
-
-// get the ratio between the rescaled blurred guess and the raw image.
-
-// update the current guess image with the ratio. 
-
-// apply non-negativity constraint - set all -ve pixels to 0.0
-
-// rescale the guess image again as above.
 
 //end algebraic iterations for loop
 }
