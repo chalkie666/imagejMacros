@@ -110,7 +110,7 @@ Ext.CLIJ2_clear();
 
 // open the test raw image and empirical PSF image
 // convert to 32 bit float, as -ve values will happen later, and tidy up the image titles for clarity.
-open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_64xcropSub100_zcrop21.tif");
+open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_128xcropSub100_zcrop21.tif");
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 //run("32-bit"); // CLIJ2 FFT convolve converts to 32 bit, we dont need to here. 
