@@ -147,9 +147,10 @@ Ext.CLIJ2_push(guessGPU)
 */
 
 guessGPU = "guess";
-sigma_x = 0.5;
-sigma_y = 0.5;
-sigma_z = 0.5;
+sigma = 0.75;
+sigma_x = sigma;
+sigma_y = sigma;
+sigma_z = sigma;
 Ext.CLIJ2_gaussianBlur3D(rawGPU, guessGPU, sigma_x, sigma_y, sigma_z);
 Ext.CLIJ2_pull(guessGPU);
 
@@ -164,9 +165,10 @@ differenceWienerGPU = "differenceWiener";
 //scaledDifferenceWienerGPU = "scaledDifferenceWienerGPU";
 updatedGuessGPU = "updatedGuess";
 nonNegUpdatedGuessGPU = "nonNegUpdatedGuess";
+guessSmoothGPU = "guessSmooth"
 
 // set up any variables we need for iterations
-var itersAlgebraic = 1;
+var itersAlgebraic = 10;
 var itersGeometric = 0;
 // get sum of raw image for use in the iteration loop
 Ext.CLIJ2_sumOfAllPixels(rawGPU);
@@ -271,6 +273,13 @@ for (i=0; i<itersAlgebraic; i++) {
 	// multiply image and scalar
 	Ext.CLIJ2_multiplyImageAndScalar(nonNegUpdatedGuessGPU, guessGPU, scalingFactor);
 	Ext.CLIJ2_pull(guessGPU);
+	// smooth the new guess image every multiple of 5 iterations, 
+	// to preven noise buildup, with gaussian and small kernel defined above. 
+	if ((i+1) % 5 == 0) {
+		Ext.CLIJ2_gaussianBlur3D(guessGPU, guessSmoothGPU, sigma_x, sigma_y, sigma_z);
+		Ext.CLIJ2_pull(guessSmoothGPU);
+		Ext.CLIJ_copy(guessSmoothGPU, guessGPU);
+	}
 
 //end algebraic iterations for loop
 }
