@@ -18,7 +18,7 @@ run("32-bit");
 rename("psf");
 
 // ini CLIJ2
-run("CLIJ2 Macro Extensions", "cl_device=CPU"); //yes im running it on the CPU, as my GPU is flaky. 
+run("CLIJ2 Macro Extensions", "cl_device=730"); //yes i'm running it on the CPU, as my GPU is flaky sometimes...?
 
 //send raw to the openCL, and also the psf
 rawCL = "raw";
