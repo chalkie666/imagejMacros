@@ -104,9 +104,9 @@ Description of the algorithm:
 // initialise CLIJ2 for the GPU by (partial) name, or for the 1st GPU it finds, by specifying no GPU explicitly
 // or fall back to CPU 
 //run("CLIJ2 Macro Extensions", "cl_device=");
-run("CLIJ2 Macro Extensions", "cl_device=[NVIDIA GeForce GT 730]");
+run("CLIJ2 Macro Extensions", "cl_device=[730]");
 //run("CLIJ2 Macro Extensions", "cl_device=CPU");
-Ext.CLIJ2_clear();
+Ext.CLIJ2_clear(); // just in case.
 
 // open the test raw image and empirical PSF image
 // convert to 32 bit float, as -ve values will happen later, and tidy up the image titles for clarity.
@@ -116,13 +116,15 @@ open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-Ye
 // CLIJ2 FFT convolve converts to 32 bit, but when we pull images from gpu it converts back to source type
 // and thats a bad idea for small factional number resutls eg in ratio calculations, as we get rounding errors 
 run("32-bit"); 
-rename("raw")
+rename("raw");
 open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
 run("32-bit");
-rename("psf")
+rename("psf");
+//TODO: rescale the PSF image so the sum of all pixels is 1, 
+// to avoid needing to rescale convolution result images every iteration.
 
 selectWindow("raw");
 
@@ -167,7 +169,8 @@ differenceWienerGPU = "differenceWiener";
 //scaledDifferenceWienerGPU = "scaledDifferenceWienerGPU";
 updatedGuessGPU = "updatedGuess";
 nonNegUpdatedGuessGPU = "nonNegUpdatedGuess";
-guessSmoothGPU = "guessSmooth"
+guessSmoothGPU = "guessSmooth";
+absDiffRawConvGuess = "absDiffRawConvGuess";
 
 // set up any variables we need for iterations
 
@@ -192,8 +195,11 @@ Ext.CLIJ2_sumOfAllPixels(rawGPU);
 rawSum = getResult("Sum", nResults() - 1);
 print("rawSum " + rawSum);
 
-//algebraic iterations for loop
-for (i=0; i<itersAdditive; i++) {
+// An array to hold R(k) convergence values from each iteration for pkotting later. 
+rkValues = newArray(iterations);
+
+// Iterations for loop
+for (i=0; i<iterations; i++) {
 
 	//blur the current guess (raw image at the beginning) with the PSF using CLIJ2 custom kernel convolve.
 	//FD Math works on single slices only, so use DeconvLab2 or CLIJ2
@@ -208,7 +214,7 @@ for (i=0; i<itersAdditive; i++) {
 	// TODO: This only works when raw image is eg 64x64x21 and psf is larger in xy (256) and same in z (21). 
 	// but raw data is normally a bigger image than the PSF image... is it a bug?
 	//
-	Ext.CLIJx_convolveFFT(guessGPU, psfGPU, convGuessGPU)
+	Ext.CLIJx_convolveFFT(guessGPU, psfGPU, convGuessGPU);
 	Ext.CLIJ2_pull(convGuessGPU);
 
 	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
@@ -242,7 +248,7 @@ for (i=0; i<itersAdditive; i++) {
 		Ext.CLIJx_simpleITKWienerDeconvolution(differenceGPU, psfGPU, differenceWienerGPU, 0.0, true);
 		Ext.CLIJ2_pull(differenceWienerGPU);
 /*
-		// rescale (or mayne not?)  the Wiener Filtered difference image to same sum intenisty as difference image.
+		// rescale (or maybe not?)  the Wiener Filtered difference image to same sum intenisty as difference image.
 		// TODO: but there are negative and positives in the difference images, so whats the right way to scale them?
 		// Cant use sum? need absolute sum? modulus? Do we even need to rescsale ?
 		// find sum of current difference images
@@ -315,7 +321,7 @@ for (i=0; i<itersAdditive; i++) {
 	print(i + " nonNegUpdatedGuessSum " + nonNegUpdatedGuessSum);
 	// calculate ratio of sums, and scale current guess image pixel intensities accordingly
 	scalingFactor = rawSum / nonNegUpdatedGuessSum;
-	print(i + " scaling factor" + scalingFactor);
+	print(i + " scaling factor " + scalingFactor);
 	// multiply image and scalar
 	Ext.CLIJ2_multiplyImageAndScalar(nonNegUpdatedGuessGPU, guessGPU, scalingFactor);
 	Ext.CLIJ2_pull(guessGPU);
@@ -327,11 +333,36 @@ for (i=0; i<itersAdditive; i++) {
 		Ext.CLIJ_copy(guessSmoothGPU, guessGPU);
 	}
 
-//end algebraic iterations for loop
+	//TODO : This code tries to implement convergence measurement R(k), as per Dans notes
+	// but where is it described in the book? Agard publication? Is this even right?
+	// R(k)  = (sum of |raw - blurredGuess |) / sum of raw
+	// R(k) should start at 1 at the beginning , drop quickly, and level off once convergence is almost reached. 
+	// Need the value of raw image summed pixel values - this is done above, before and outside the loop: rawSum
+	// Need to calculate algebraic sum of pixelwize difference between raw and blurredGuess
+	Ext.CLIJ2_absoluteDifference(rawGPU, scaledConvGuessGPU, absDiffRawConvGuess);
+	Ext.CLIJ2_sumOfAllPixels(absDiffRawConvGuess);
+	absDiffRawConvGuessSum = getResult("Sum", nResults() - 1);
+	print(i + " absDiffRawConvGuessSum " + absDiffRawConvGuessSum);
+	Rconvergence = absDiffRawConvGuessSum / rawSum;
+	print(i + " Rconvergence " + Rconvergence);
+	rkValues[i] = Rconvergence;
+	//print(rkValues[i]);
+
+//end iterations for loop
 }
 
 //pull the last iteration result image
 Ext.CLIJ2_pull(guessGPU);
+
+//plot the R(k) convergence values.
+Plot.create("Convergence R(k) Plot", "X", "Y");
+Plot.setLimits(0, i-1, 0, 1);
+Plot.setLineWidth(2);
+Plot.setColor("lightGray");
+Plot.add("line", rkValues);
+Plot.setColor("red");
+Plot.add("circles", rkValues);
+Plot.show();
 
 // clear GPU
 Ext.CLIJ2_clear();
