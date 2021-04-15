@@ -180,14 +180,19 @@ absDiffRawConvGuess = "absDiffRawConvGuess";
 // referred to in the black box software as "Enhanced" 
 // In the book chapter, Additive is called algebraic, and Ratio is called geometric
 // choose 1 of "EnhancedAdditive" or "EnhancedRatio", 
-// TODO "Ratio" or "Additive" without Wiener filter step not implemented yet. 
-// Note that both enhanced methods use Additive iteration for the first step
+// Note that both "Enhanced-x" methods use Additive iteration for the first step
 // containing the Wiener filtered difference image. EnhancedRatio then switches to ratio updates
-//default is "EnhancedRatio" as per the black box implementation 
+// Default is "EnhancedRatio" as per the black box implementation 
 algorithmType = "EnhancedRatio";
-// only multiples of 5 iterations make sense because result is smoothed very 5 iterations. 
-itersMultiplesOfFive = 2;
-itersAdditive = itersMultiplesOfFive*5;
+// check the algorithmType is spelled correctly and is one of the 4 allowed. 
+if ((algorithmType != "EnhancedRatio") && (algorithmType != "Ratio") && (algorithmType != "EnhancedAdditive") && (algorithmType != "Additive")) {
+	print("You spelled the method name wrong!");
+	exit("You spelled the method name wrong!");
+}
+
+// only multiples of 5 iterations make sense because the result image is smoothed very 5 iterations. 
+itersMultiplesOfFive = 1; // 1 set of 5 iterations should be enough most of the time, especially if "Enhanced" is used 
+iterations = itersMultiplesOfFive*5;
 
 // get sum of raw image for use in the iteration loop
 Ext.CLIJ2_sumOfAllPixels(rawGPU);
