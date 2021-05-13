@@ -266,7 +266,11 @@ for (i=0; i<iterations; i++) {
 		//normalize = true; // what is being normalised? The image result is not same sum intensity as the input? 
 		//Ext.CLIJx_simpleITKWienerDeconvolution(image1, image2, image3, noise_variance, normalize);
 */
-		Ext.CLIJx_simpleITKWienerDeconvolution(differenceGPU, psfGPU, differenceWienerGPU, 0.0, true);
+		// changing the noise variance and normalize parameters doesnt seem to do much??? 
+		// whatever it is set to, there is too much high frequency filtering happening...
+		noiseVariance = 0.01;
+		normalize = true;
+		Ext.CLIJx_simpleITKWienerDeconvolution(differenceGPU, psfGPU, differenceWienerGPU, noiseVariance, normalize);
 		Ext.CLIJ2_pull(differenceWienerGPU);
 /*
 		// rescale (or maybe not?)  the Wiener Filtered difference image to same sum intenisty as difference image.
