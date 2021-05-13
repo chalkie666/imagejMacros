@@ -117,7 +117,7 @@ Ext.CLIJ2_clear(); // just in case.
 //Big images
 open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/MP1_1516_24oC_Gz512xy_005_subtract120.tif");
 // CLIJ2 FFT convolve converts to 32 bit, but when we pull images from gpu it converts back to source type
-// and thats a bad idea for small fractional number resutls eg in ratio calculations, as we get rounding errors 
+// and thats a bad idea for small fractional number results eg in ratio calculations, as we get BIG rounding errors 
 run("32-bit"); 
 rename("raw");
 //PSFs
@@ -156,6 +156,9 @@ sigma_y = sigma;
 sigma_z = sigma;
 Ext.CLIJ2_gaussianBlur3D(rawGPU, guessGPU, sigma_x, sigma_y, sigma_z);
 Ext.CLIJ2_pull(guessGPU);
+rename("GuessAfterGaussBlur");
+print("Initial Gauss smooth " + Ext.CLIJ2_reportMemory()); 
+//Ext.CLIJ2_reportMemory();
 
 /* iterations setup
  need to define output image variables same size as input guess image
@@ -183,7 +186,7 @@ absDiffRawConvGuess = "absDiffRawConvGuess";
 // Note that both "Enhanced-x" methods use Additive iteration for the first step
 // containing the Wiener filtered difference image. EnhancedRatio then switches to ratio updates
 // Default is "EnhancedRatio" as per the black box implementation 
-algorithmType = "EnhancedRatio";
+algorithmType = "Additive";
 // check the algorithmType is spelled correctly and is one of the 4 allowed. 
 if ((algorithmType != "EnhancedRatio") && (algorithmType != "Ratio") && (algorithmType != "EnhancedAdditive") && (algorithmType != "Additive")) {
 	print("You spelled the method name wrong!");
@@ -191,7 +194,7 @@ if ((algorithmType != "EnhancedRatio") && (algorithmType != "Ratio") && (algorit
 }
 
 // only multiples of 5 iterations make sense because the result image is smoothed very 5 iterations. 
-itersMultiplesOfFive = 1; // 1 set of 5 iterations should be enough most of the time, especially if "Enhanced" is used 
+itersMultiplesOfFive = 2; // 1 set of 5 iterations should be enough most of the time, especially if "Enhanced" is used 
 iterations = itersMultiplesOfFive*5;
 
 // get sum of raw image for use in the iteration loop
@@ -231,6 +234,7 @@ for (i=0; i<iterations; i++) {
 	//
 	Ext.CLIJx_convolveFFT(guessGPU, psfGPU, convGuessGPU);
 	Ext.CLIJ2_pull(convGuessGPU);
+	print("iteration " + i +" after convolve " + Ext.CLIJ2_reportMemory()); 
 
 	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
 	// dont need to do this is PSF isd normalised to sum=1
@@ -285,6 +289,7 @@ for (i=0; i<iterations; i++) {
 		// for 1st "EnhancedAdditive", EnhancedRatio" and "additive" iteration, 
 		// update the current guess image with the inverse filtered residuals, by addition of the two images. 
 		Ext.CLIJ2_addImages(guessGPU, differenceWienerGPU, updatedGuessGPU);
+		print("iteration " + i +" After Wiener  " + Ext.CLIJ2_reportMemory()); 
 	}
 
 	// For 1st "Additive" iteration update the guess 
@@ -295,6 +300,7 @@ for (i=0; i<iterations; i++) {
 		Ext.CLIJ2_subtractImages(rawGPU, convGuessGPU, differenceGPU);
 		// add difference to guess
 		Ext.CLIJ2_addImages(guessGPU, differenceGPU, updatedGuessGPU);
+		print("iteration " + i +" after subtract " + Ext.CLIJ2_reportMemory()); 
 
 	}
 
@@ -307,6 +313,7 @@ for (i=0; i<iterations; i++) {
 		//Ext.CLIJ2_divideImages(rawGPU, scaledConvGuessGPU, differenceGPU); // use when psf is not normailised to sum =1 
 		Ext.CLIJ2_divideImages(rawGPU, convGuessGPU, differenceGPU);
 		Ext.CLIJ2_multiplyImages(guessGPU, differenceGPU, updatedGuessGPU);
+		print("iteration " + i +" after ratio " + Ext.CLIJ2_reportMemory()); 
 	}
 	
 	// for non first "Additive" and "EnhancedAdditive" interations update the guess 
@@ -317,6 +324,7 @@ for (i=0; i<iterations; i++) {
 		Ext.CLIJ2_subtractImages(rawGPU, convGuessGPU, differenceGPU);
 		// add difference to guess
 		Ext.CLIJ2_addImages(guessGPU, differenceGPU, updatedGuessGPU);
+		print("iteration " + i +" after subtract " + Ext.CLIJ2_reportMemory()); 
 	}
 
 	// For non first "EnhancedRatio" and "Ratio" iterations
@@ -328,6 +336,7 @@ for (i=0; i<iterations; i++) {
 		//Ext.CLIJ2_divideImages(rawGPU, scaledConvGuessGPU, differenceGPU); // use when psf is not normailised to sum =1 
 		Ext.CLIJ2_divideImages(rawGPU, convGuessGPU, differenceGPU);
 		Ext.CLIJ2_multiplyImages(guessGPU, differenceGPU, updatedGuessGPU);
+		print("iteration " + i +" after ratio " + Ext.CLIJ2_reportMemory()); 
 	}
 
 	Ext.CLIJ2_pull(differenceGPU);
@@ -340,6 +349,7 @@ for (i=0; i<iterations; i++) {
 	//Ext.CLIJ2_print(destination);
 	Ext.CLIJ2_maximumImageAndScalar(updatedGuessGPU, nonNegUpdatedGuessGPU, 0.000000000000000000000000000);
 	Ext.CLIJ2_pull(nonNegUpdatedGuessGPU);
+	print("iteration " + i +" after non neg " + Ext.CLIJ2_reportMemory());
 
 	// TODO: Rescale is happening another time here (or not, see above), so better make it a function? 
 	// rescale the blurred guess so the sum of all the pixels is the same as the raw image - preserve total signal quantity.
@@ -358,9 +368,11 @@ for (i=0; i<iterations; i++) {
 		Ext.CLIJ2_gaussianBlur3D(guessGPU, guessSmoothGPU, sigma_x, sigma_y, sigma_z);
 		//Ext.CLIJ2_pull(guessSmoothGPU);
 		Ext.CLIJ_copy(guessSmoothGPU, guessGPU);
+		print("iteration " + i +" after 5x iter Gauss smooth " + Ext.CLIJ2_reportMemory());
 	}
 
 	Ext.CLIJ2_pull(guessGPU);
+	print("iteration " + i +" latest guess " + Ext.CLIJ2_reportMemory()); 
 
 	//TODO : This code tries to implement convergence measurement R(k), as per Dan's notes
 	// but where is it described in the book? Agard publication? Is this even right?
@@ -383,6 +395,7 @@ for (i=0; i<iterations; i++) {
 
 //pull the last iteration result image
 Ext.CLIJ2_pull(guessGPU);
+print("End " + Ext.CLIJ2_reportMemory());
 
 //plot the R(k) convergence values.
 Plot.create("Convergence R(k) Plot", "X", "Y");
