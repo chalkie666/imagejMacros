@@ -1,0 +1,87 @@
+Multiprocessor-enabled deconvolution (using 4 processors)
+decon3d: 3d deconvolution...
+No available photosensor data. Switching to polynomial normalization...
+Passed camera intensity offset 100.000000 is greater than min intensity 0.000000...
+Resetting all channels to default offset.
+
+Image Correction Options
+ Input image file............................. /home/worx/Desktop/C1yeast128cSub100_zcrop21.dv_TIF.dv
+ Output image file............................ /tmp/C1yeast128cSub100_zcrop21.dv_TIF_D3D.dv_cor_WPA
+ Polynomial order............................. 5
+ X min and max for normalization.............. 0 127
+ Y min and max for normalization.............. 0 127
+ Normalization................................ on
+ Type of normalization........................ 2
+ Camera Intensity Offset (bias)............... 0.00
+ Bleach correction............................ on
+ Z-line correction............................ on
+ Intensity offset(s).......................... 0.00
+ Photosensor reference value(s)............... 1.0000e+00
+Correcting time point 1, wavelength 1, panel 1...
+Reading 3D image data (21 sections)...
+Photobleaching correction disabled. Best-fit slope is <0 (-2.03806e-04).
+  Z      Ref   Scaled Ref
+  -      ---   ----------
+   1     48.52    48.52
+   2     50.25    48.51
+   3     51.16    48.50
+   4     51.49    48.49
+   5     52.49    48.48
+   6     53.14    48.47
+   7     54.44    48.46
+   8     55.80    48.44
+   9     57.17    48.43
+  10     57.75    48.42
+  11     58.54    48.41
+  12     59.44    48.40
+  13     59.11    48.39
+  14     60.15    48.39
+  15     60.22    48.38
+  16     60.32    48.37
+  17     60.14    48.36
+  18     60.63    48.35
+  19     61.37    48.34
+  20     61.32    48.33
+  21     61.19    48.32
+imgcorr: replaced 8 bad pixels.
+Replacing 8 pixels...
+----------------------------------------------------
+Deconvolution Results:
+Opening OTF file (/usr/local/otf/Olympus_60X_142_10612.otf)...
+decon3d: 3D iterative constrained deconvolution
+  Input image file............................. /tmp/C1yeast128cSub100_zcrop21.dv_TIF_D3D.dv_cor_WPA
+  Output image file............................ /home/worx/Desktop/C1yeast128cSub100_zcrop21.dv_TIF_D3D.dv
+  Method (1=add,2=ratio,3=enh add,4=enh ratio). 4
+  Values subtracted from image.................     0.00
+  Intensity scaling factor.....................       1.0000
+  Border roll-off size (pixels)................ 6
+  Pre-filter cut-off values (microns)..........     0.2000,    0.0500
+  Sigma for smoothing..........................     0.3050
+  Sigma for smoothing Wiener filter............     0.1100
+  S:N value for Wiener filter..................     0.1010
+  Z padding.................................... 64
+  Number of iterations before smoothing........ 5
+  Maximum number of iterations................. 10
+  Autoscaling.................................. enabled
+Allocating image memory (nx=128,ny=128,sOpt->nzo=21,total=0.3 MP)...
+Generating pre-filter and smoothing function...
+Wavelength 525.0 nm processed with OTF measured at 617.0 nm (scale=1.175)...
+Preparing OTF (64 64 65)...
+Deconvolving wavelength 525.0, time point 1 (3D)...
+Z noise filter threshold=1008.00
+Prefiltering wavelength 525.0...
+decon3d: starting iterations...
+                  Standard       Avg Counts
+ Iteration      Residual (R)      Residual      Normalized R
+ ---------      ------------      --------      ------------
+     1           0.14714085          6.74            1.000
+     2           0.09864462          4.52            0.670
+     3           0.09493221          4.35            0.645
+     4           0.09374204          4.30            0.637
+     5           0.09790642          4.49            0.665
+     6           0.10223614          4.69            0.695
+     7           0.09814396          4.50            0.667
+     8           0.10251104          4.70            0.697
+     9           0.10777583          4.94            0.732
+decon3d: finished iterations (9/10).
+Total deconvolution time: 00:00:00

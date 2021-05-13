@@ -111,22 +111,22 @@ Ext.CLIJ2_clear(); // just in case.
 // open the test raw image and empirical PSF image
 // convert to 32 bit float, as -ve values will happen later, and tidy up the image titles for clarity.
 // small images
-open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_128xcropSub100_zcrop21.tif");
+//open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_128xcropSub100_zcrop21.tif");
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/C1-YeastTNA1_1516_conv_RG_26oC_003_256xcropSub100.tif");
 //Big images
-//open("D:/20210416PSF/MP1_1516_24oC_Gz512xy_005.dv");
+open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/MP1_1516_24oC_Gz512xy_005_subtract120.tif");
 // CLIJ2 FFT convolve converts to 32 bit, but when we pull images from gpu it converts back to source type
 // and thats a bad idea for small fractional number resutls eg in ratio calculations, as we get rounding errors 
 run("32-bit"); 
 rename("raw");
 //PSFs
-open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
+//open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
 //open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105crop64_zcentred.tif");
 //open("C:/Users/dan/Documents/GitHub/imagejMacros/DeconvolutionDemos/gpsf_3D_1514_a3_001_WF-sub105_zcentred.tif");
-//Green PSF OMX 60x/1.42 0.2 um z steps
-//open("D:/20210416PSF/zeissYGbead_water_1516_24oC_ConvGz0point2z_005.dv")
+//Green PSF OMX 60x/1.42 0.2 um z steps, camera offset and bkgrnd subtracted, normaliosed to sum = 1 
+open("C:/Users/ECO Office/Documents/GitHub/imagejMacros/DeconvolutionDemos/zeissYGbead_water_1516_24oC_ConvGz0point2z_005_sub160_norm1.tif")
 run("32-bit");
 rename("rawPsf");
 
@@ -342,7 +342,7 @@ for (i=0; i<iterations; i++) {
 	// multiply image and scalar
 	Ext.CLIJ2_multiplyImageAndScalar(nonNegUpdatedGuessGPU, guessGPU, scalingFactor);
 	// smooth the new guess image every multiple of 5 iterations, 
-	// to preven noise buildup, with gaussian and small kernel defined above. 
+	// to preven noise build up, with Gaussian and small kernel defined above. 
 	if ((i+1) % 5 == 0) {
 		Ext.CLIJ2_gaussianBlur3D(guessGPU, guessSmoothGPU, sigma_x, sigma_y, sigma_z);
 		//Ext.CLIJ2_pull(guessSmoothGPU);
@@ -351,7 +351,7 @@ for (i=0; i<iterations; i++) {
 
 	Ext.CLIJ2_pull(guessGPU);
 
-	//TODO : This code tries to implement convergence measurement R(k), as per Dans notes
+	//TODO : This code tries to implement convergence measurement R(k), as per Dan's notes
 	// but where is it described in the book? Agard publication? Is this even right?
 	// R(k)  = (sum of |raw - blurredGuess |) / sum of raw
 	// R(k) should start at 1 at the beginning , drop quickly, and level off once convergence is almost reached. 
