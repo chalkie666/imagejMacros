@@ -297,6 +297,17 @@ for (i=0; i<iterations; i++) {
 		Ext.CLIJ2_addImages(guessGPU, differenceGPU, updatedGuessGPU);
 
 	}
+
+	// For 1st "Ratio" iteration update the guess 
+	// with the difference: a Gold upadte, Gold's ratio update, book page 115
+	// newGuess = guess * (raw / PSFblurredGuess)
+	// (TODO: The modified Gold's ratio method on page 116 ensured convergence and non negativity, 
+	// using a similar multiplication by flipped OTF that the RL iteration uses) 
+	if ((i==0) && (algorithmType == "Ratio")) {
+		//Ext.CLIJ2_divideImages(rawGPU, scaledConvGuessGPU, differenceGPU); // use when psf is not normailised to sum =1 
+		Ext.CLIJ2_divideImages(rawGPU, convGuessGPU, differenceGPU);
+		Ext.CLIJ2_multiplyImages(guessGPU, differenceGPU, updatedGuessGPU);
+	}
 	
 	// for non first "Additive" and "EnhancedAdditive" interations update the guess 
 	// with the difference: a Van Cittert upadte, book p81, 295 
