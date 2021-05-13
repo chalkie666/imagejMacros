@@ -200,7 +200,7 @@ Ext.CLIJ2_sumOfAllPixels(rawGPU);
 rawSum = getResult("Sum", nResults() - 1);
 print("rawSum " + rawSum);
 
-// normalise the PSF to sum = 1, so we dont have to rescale the conmvolved image each ioteration, as it will then retain its sum intensity. 
+// normalise the PSF to sum = 1, so we dont have to rescale the convolved image each iteration, as it will then retain its sum intensity. 
 Ext.CLIJ2_sumOfAllPixels(rawPsfGPU);
 rawPsfGPUSum = getResult("Sum", nResults() - 1);
 print("rawPsfSum " + rawPsfGPUSum);
@@ -288,7 +288,7 @@ for (i=0; i<iterations; i++) {
 	}
 
 	// For 1st "Additive" iteration update the guess 
-	// with the difference: a Van Cittert upadte, book p81, 295 
+	// with the difference: a Van Cittert update, book p81, 295 
 	if ((i==0) && (algorithmType == "Additive")) {
 		// subtract images
 		//Ext.CLIJ2_subtractImages(rawGPU, scaledConvGuessGPU, differenceGPU); // use when psf is not normailised to sum =1 
@@ -323,7 +323,7 @@ for (i=0; i<iterations; i++) {
 	Ext.CLIJ2_pull(updatedGuessGPU);
 
 	// apply non-negativity constraint - set all -ve pixels to 0.0	
-		// use the maximumImageAnsScalar CLIJ2 gadget
+		// use the maximumImageAndScalar CLIJ2 gadget
 	//Ext.CLIJ2_pushArray(source, newArray(0, -1, 5), 3, 1, 1); // width=3, height=1, depth=1
 	//Ext.CLIJ2_maximumImageAndScalar(source, destination, 0);
 	//Ext.CLIJ2_print(destination);
