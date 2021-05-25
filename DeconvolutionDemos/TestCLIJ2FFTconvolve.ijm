@@ -18,7 +18,7 @@ run("32-bit");
 rename("psf");
 
 // ini CLIJ2
-run("CLIJ2 Macro Extensions", "cl_device=730"); //yes i'm running it on the CPU, as my GPU is flaky sometimes...?
+run("CLIJ2 Macro Extensions", "cl_device=730");
 
 //send raw to the openCL, and also the psf
 rawCL = "raw";
@@ -26,7 +26,7 @@ Ext.CLIJ2_push(rawCL);
 psfCL = "psf";
 Ext.CLIJ2_push(psfCL);
 
-convTestCL = "convResult";
+//convTestCL = "convResult";
 
 Ext.CLIJx_convolveFFT(rawCL, psfCL, convTestCL);
 
@@ -42,5 +42,3 @@ Ext.CLIJ2_sumOfAllPixels(differenceCL);
 // clear GPU
 Ext.CLIJ2_clear();
 
-//as of 13 apr 2021 seems that PSF (kernel) 
-//must be larger in xy dimensions xy than image and same in z  to be convolved with it?
